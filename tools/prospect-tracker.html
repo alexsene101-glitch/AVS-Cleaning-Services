@@ -1,0 +1,430 @@
+<title>AVS Prospect Tracker</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: phone-first column — weekly scoreboard, view tabs (due / next to contact / pipeline / all), area filter, prospect cards in route order from Digbeth outward; bottom sheets for details and for the call script */
+:root{
+  --bg:#f3f5f6; --surface:#ffffff; --ink:#14212b; --muted:#5b6b76; --line:#dde3e7;
+  --accent:#0f6b5b; --accent-ink:#ffffff; --accent-soft:#e2f1ed;
+  --warn:#a5560c; --warn-soft:#fbeedd; --hot:#9b2c4a; --hot-soft:#f8e3ea; --done:#4b5a64; --done-soft:#e9edf0;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --body:"Public Sans",ui-sans-serif,system-ui,-apple-system,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f171d; --surface:#17222a; --ink:#e6edf1; --muted:#93a4af; --line:#26343e;
+  --accent:#4fc2a8; --accent-ink:#06231d; --accent-soft:#163a33;
+  --warn:#f0a85a; --warn-soft:#3a2a17; --hot:#f08aa6; --hot-soft:#3a1c26; --done:#a3b2bc; --done-soft:#222e36; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f171d; --surface:#17222a; --ink:#e6edf1; --muted:#93a4af; --line:#26343e;
+  --accent:#4fc2a8; --accent-ink:#06231d; --accent-soft:#163a33;
+  --warn:#f0a85a; --warn-soft:#3a2a17; --hot:#f08aa6; --hot-soft:#3a1c26; --done:#a3b2bc; --done-soft:#222e36; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;padding-inline:16px;padding-block:16px 96px}
+.wrap{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--display);font-size:1.6rem;margin:0;letter-spacing:-.01em}
+.sub{color:var(--muted);font-size:.85rem;margin:2px 0 0}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.score{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px}
+.score div{display:flex;flex-direction:column;gap:2px;min-width:0}
+.score .lbl{font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.score .val{font-size:1.1rem}
+.score .due .val{color:var(--warn)}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;grid-column:1/-1}
+.bar i{display:block;height:100%;background:var(--accent);width:0}
+.goal{grid-column:1/-1;font-size:.78rem;color:var(--muted)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 12px;font:inherit;font-size:.84rem;cursor:pointer}
+.tab[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tab .c{opacity:.7;margin-left:4px}
+select,input,textarea{font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 10px;width:100%;min-width:0}
+.list{display:flex;flex-direction:column;gap:10px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:9px}
+.card.due{border-left:4px solid var(--warn)}
+.top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.top>div{min-width:0}
+.nm{font-weight:600;overflow-wrap:anywhere}
+.meta{font-size:.8rem;color:var(--muted)}
+.ord{font-family:var(--mono);font-size:.75rem;color:var(--muted);white-space:nowrap}
+.chips{display:flex;gap:5px;flex-wrap:wrap}
+.chip{font-size:.72rem;padding:2px 8px;border-radius:999px;background:var(--done-soft);color:var(--done);font-weight:600}
+.chip.hi{background:var(--hot-soft);color:var(--hot)}
+.chip.st{background:var(--accent-soft);color:var(--accent)}
+.chip.wr{background:var(--warn-soft);color:var(--warn)}
+.contact{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:.88rem}
+.contact a{color:var(--accent)}
+.acts{display:flex;gap:6px;flex-wrap:wrap}
+button{font:inherit;cursor:pointer}
+.pri{background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;padding:8px 12px;font-weight:600;font-size:.85rem}
+.gh{background:transparent;border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:8px 12px;font-size:.85rem}
+button:disabled{opacity:.5;cursor:default}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:14px;padding:22px;text-align:center;color:var(--muted)}
+.empty strong{display:block;color:var(--ink);font-family:var(--display);font-size:1.05rem;margin-bottom:4px}
+.fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--accent);color:var(--accent-ink);border:0;border-radius:999px;padding:14px 20px;font-weight:600;box-shadow:0 6px 18px rgb(0 0 0 / .18)}
+.scrim{position:fixed;inset:0;background:rgb(0 0 0 / .4);display:flex;align-items:flex-end;justify-content:center;z-index:10}
+.sheet{background:var(--surface);width:100%;max-width:640px;border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px));max-height:92%;overflow-y:auto;display:flex;flex-direction:column;gap:11px}
+.sheet h2{font-family:var(--display);margin:0;font-size:1.2rem}
+label{display:flex;flex-direction:column;gap:4px;font-size:.78rem;color:var(--muted);min-width:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+textarea{min-height:70px;resize:vertical}
+.row{display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap}
+.err{color:var(--hot);font-size:.85rem}
+.ok{color:var(--accent);font-size:.85rem}
+.note{font-size:.78rem;color:var(--muted);text-align:center}
+/* call sheet */
+.bignum{font-family:var(--mono);font-size:1.6rem;font-variant-numeric:tabular-nums;user-select:all}
+.opener{background:var(--accent-soft);border-radius:12px;padding:12px 14px}
+.opener .lbl{font-size:.7rem;text-transform:uppercase;letter-spacing:.07em;color:var(--accent);font-weight:600}
+.opener p{margin:4px 0 0;font-size:1rem;line-height:1.5}
+.opener .ask{font-weight:600;font-size:.9rem}
+.outs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.outs button{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;padding:10px;text-align:left;font-size:.88rem}
+.outs button small{display:block;color:var(--muted);font-size:.74rem}
+.outs .g{border-left:4px solid var(--accent)} .outs .m{border-left:4px solid var(--warn)} .outs .n{border-left:4px solid var(--hot)}
+details{border-top:1px solid var(--line);padding:7px 0}
+summary{cursor:pointer;font-weight:600;font-size:.9rem}
+details p{margin:6px 0 0;font-size:.9rem}
+table.prices{width:100%;border-collapse:collapse;font-size:.88rem;font-variant-numeric:tabular-nums;margin-top:6px}
+table.prices td{padding:3px 0;border-bottom:1px solid var(--line)}
+table.prices td:last-child{text-align:right;font-weight:600}
+@media (max-width:420px){.score{grid-template-columns:repeat(2,1fr)}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>AVS Prospect Tracker</h1>
+    <p class="sub">Letting agents, block managers and landlords, in route order from Digbeth outward. Tap Call for the script, log the outcome, and the follow-up schedules itself.</p>
+  </header>
+
+  <section class="score" aria-label="This week">
+    <div class="due"><span class="lbl">Due today</span><span class="val num" id="sDue">0</span></div>
+    <div><span class="lbl">Contacted (wk)</span><span class="val num" id="sWeek">0</span></div>
+    <div><span class="lbl">Interested</span><span class="val num" id="sInt">0</span></div>
+    <div><span class="lbl">Clients</span><span class="val num" id="sWon">0</span></div>
+    <div class="bar"><i id="goalBar"></i></div>
+    <div class="goal" id="goalTxt">Weekly goal: 50 new contacts (10 a day)</div>
+  </section>
+
+  <div class="tabs" role="group" aria-label="View">
+    <button class="tab" data-v="due" aria-pressed="true">Due<span class="c" id="cDue"></span></button>
+    <button class="tab" data-v="next" aria-pressed="false">Next to contact<span class="c" id="cNext"></span></button>
+    <button class="tab" data-v="pipe" aria-pressed="false">Pipeline<span class="c" id="cPipe"></span></button>
+    <button class="tab" data-v="all" aria-pressed="false">All<span class="c" id="cAll"></span></button>
+  </div>
+  <select id="areaSel" aria-label="Area"><option value="">All areas</option></select>
+
+  <div class="list" id="list"><div class="empty"><strong>Loading prospects…</strong>Your saved list appears here.</div></div>
+  <p class="err" id="topErr" hidden></p>
+  <p class="note">Business listings from Google Maps. Check details before contacting.</p>
+</div>
+
+<button class="fab" id="addBtn">+ Add prospect</button>
+
+<div class="scrim" id="scrim" hidden>
+  <form class="sheet" id="form" autocomplete="off">
+    <h2 id="fTitle">Prospect</h2>
+    <label>Business name<input id="f-name" required></label>
+    <div class="grid2">
+      <label>Type<select id="f-kind"><option>Letting agent</option><option>Block manager</option><option>Student / HMO</option><option>Short-let / serviced</option><option>Landlord</option><option>Commercial</option><option>Facilities manager</option></select></label>
+      <label>Area<input id="f-area" list="areas"></label>
+    </div>
+    <datalist id="areas"></datalist>
+    <div class="grid2">
+      <label>Contact person<input id="f-person" placeholder="e.g. Sarah, lettings manager"></label>
+      <label>Phone<input id="f-phone" inputmode="tel"></label>
+    </div>
+    <label>Email<input id="f-email" type="email"></label>
+    <label>Address<input id="f-address"></label>
+    <div class="grid2">
+      <label>Status<select id="f-status"><option>New</option><option>Contacted</option><option>Interested</option><option>Trial booked</option><option>Client</option><option>Not now</option></select></label>
+      <label>Next follow-up<input id="f-next" type="date"></label>
+    </div>
+    <label>Notes<textarea id="f-notes" placeholder="What they said, who to ask for, best time to call"></textarea></label>
+    <p class="err" id="fErr" hidden></p>
+    <div class="row">
+      <button type="button" class="gh" id="delBtn" hidden>Delete</button>
+      <span style="flex:1"></span>
+      <button type="button" class="gh" id="cancelBtn">Cancel</button>
+      <button type="submit" class="pri" id="saveBtn">Save</button>
+    </div>
+  </form>
+</div>
+
+<div class="scrim" id="callScrim" hidden>
+  <section class="sheet" aria-labelledby="cTitle">
+    <div class="row" style="align-items:flex-start">
+      <div style="min-width:0"><h2 id="cTitle">Call</h2><div class="meta" id="cMeta"></div></div>
+      <button type="button" class="gh" id="cClose">Close</button>
+    </div>
+    <div class="row" style="align-items:center;justify-content:flex-start">
+      <span class="bignum" id="cPhone"></span>
+      <button type="button" class="gh" id="cCopy">Copy</button>
+      <a class="pri" id="cDial" style="text-decoration:none">Call</a>
+    </div>
+    <div class="meta" id="cHist"></div>
+    <div class="opener">
+      <div class="lbl" id="oLbl">Opener</div>
+      <p id="oTxt"></p>
+      <p class="ask" id="oAsk"></p>
+    </div>
+    <label>Who you spoke to<input id="c-person" placeholder="e.g. Sarah, lettings manager"></label>
+    <label>Email to send rates to<input id="c-email" type="email" placeholder="name@agency.co.uk"></label>
+    <label>Notes from the call<textarea id="c-notes" placeholder="Portfolio size, current cleaner, timing, pain points"></textarea></label>
+    <div class="outs" role="group" aria-label="Log outcome">
+      <button type="button" class="m" data-o="noanswer">No answer<small>Try again next working day</small></button>
+      <button type="button" class="m" data-o="voicemail">Left voicemail<small>Follow up in 2 working days</small></button>
+      <button type="button" class="g" data-o="interested">Interested<small>Send rates today</small></button>
+      <button type="button" class="g" data-o="trial">Trial / quote booked<small>Status: Trial booked</small></button>
+      <button type="button" class="n" data-o="notnow">Not now<small>Check back in 90 days</small></button>
+      <button type="button" class="n" data-o="stop">Don't call again<small>Moves to Not now, no follow-up</small></button>
+    </div>
+    <p id="cMsg" class="ok" hidden></p>
+    <div class="row" id="ratesRow" hidden>
+      <button type="button" class="pri" id="cRates">Copy rates email</button>
+      <span class="meta" style="flex:1">Paste into Gmail to <span id="cRatesTo"></span>, then attach the insurance certificate.</span>
+    </div>
+    <details open><summary>"We already have a cleaner."</summary>
+      <p>"Makes sense, most agents we speak to do. Would it help to have us as backup for the busy check-out weeks? Your first clean comes with a dated photo report, so you can compare."</p></details>
+    <details><summary>"Just send me an email."</summary>
+      <p>"Happy to. Who should I put it for the attention of, and what's the best address? I'll send our prices and insurance certificate today."</p></details>
+    <details><summary>"How much do you charge?"</summary>
+      <p>Give the fixed price below, then: "That includes inside the oven and fridge, a dated photo report the same day, and a free re-clean within 48 hours if anything's missed."</p></details>
+    <details><summary>"That's more than we pay."</summary>
+      <p>"We're not the cheapest and we don't try to be. A failed check-out or a deposit dispute costs more than the difference. The photo report is your evidence, and the re-clean is on us."</p></details>
+    <details><summary>"Tenants clean it themselves."</summary>
+      <p>"Understood. When a tenant leaves it in a state, or you've a quick turnaround, would it help to have someone you can book that week? Can I send our rates so they're on file?"</p></details>
+    <details><summary>Gatekeeper / reception</summary>
+      <p>"Hi, it's Alexandre from AVS Cleaning. Who looks after booking cleaners for your check-outs and communal areas? Could you put me through, or give me their email?"</p></details>
+    <details><summary>Price card</summary>
+      <table class="prices">
+        <tr><td>Single HMO room</td><td>£120</td></tr><tr><td>1-bed</td><td>£220</td></tr><tr><td>2-bed</td><td>£290</td></tr>
+        <tr><td>3-bed</td><td>£380</td></tr><tr><td>4-bed HMO</td><td>£580</td></tr><tr><td>5-bed HMO</td><td>£700</td></tr>
+        <tr><td>6-bed HMO</td><td>£820</td></tr><tr><td>Communal: single HMO</td><td>£180</td></tr>
+        <tr><td>Communal: block up to 10 flats</td><td>£340</td></tr><tr><td>Communal: large block</td><td>£520</td></tr>
+      </table>
+      <p class="meta">End of tenancy, turnover or deep clean, empty property. Furnished +15%. Regular contracts priced individually. Prepaid by card link.</p>
+    </details>
+  </section>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const today = () => { const d=new Date(); return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10); };
+const addDays = (iso,n) => { const d=new Date(iso+"T12:00:00"); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); };
+const addWorkdays = (iso,n) => { const d=new Date(iso+"T12:00:00"); let k=0; while(k<n){ d.setDate(d.getDate()+1); const w=d.getDay(); if(w!==0&&w!==6) k++; } return d.toISOString().slice(0,10); };
+const fmt = iso => iso ? new Date(iso+"T12:00:00").toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"}) : "";
+const GAPS = [3,4,7]; // after touch 1 -> day 3, touch 2 -> day 7, touch 3 -> day 14
+let db=null, rows=[], view="due", area="", editing=null, confirmDel=false, busy=new Set(), calling=null;
+
+function isDue(r){ return ["Contacted","Interested"].includes(r.status) && r.next && r.next <= today(); }
+function weekStart(){ const d=new Date(); const day=(d.getDay()+6)%7; d.setDate(d.getDate()-day); return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10); }
+
+function render(){
+  const ws = weekStart();
+  const due = rows.filter(isDue);
+  const newWeek = rows.filter(r=>r.firstContact && r.firstContact>=ws).length;
+  $("sDue").textContent = due.length;
+  $("sWeek").textContent = newWeek;
+  $("sInt").textContent = rows.filter(r=>["Interested","Trial booked"].includes(r.status)).length;
+  $("sWon").textContent = rows.filter(r=>r.status==="Client").length;
+  $("goalBar").style.width = Math.min(100, newWeek/50*100)+"%";
+  $("goalTxt").textContent = `Weekly goal: ${newWeek} of 50 new contacts (10 a day)`;
+
+  const inArea = r => !area || r.area===area;
+  const sets = {
+    due: due,
+    next: rows.filter(r=>r.status==="New").sort((a,b)=>(a.order||999)-(b.order||999)),
+    pipe: rows.filter(r=>["Contacted","Interested","Trial booked","Client"].includes(r.status)),
+    all: [...rows].sort((a,b)=>(a.order||999)-(b.order||999))
+  };
+  $("cDue").textContent=sets.due.length; $("cNext").textContent=sets.next.length; $("cPipe").textContent=sets.pipe.length; $("cAll").textContent=rows.length;
+  let shown = sets[view].filter(inArea);
+  if(view==="next") shown = shown.slice(0,20);
+  if(view==="pipe"){ const rank={"Client":0,"Trial booked":1,"Interested":2,"Contacted":3}; shown.sort((a,b)=>rank[a.status]-rank[b.status]||(a.next||"").localeCompare(b.next||"")); }
+
+  if(!rows.length){ $("list").innerHTML=`<div class="empty"><strong>No prospects yet</strong>Tap “+ Add prospect” to add a letting agent or landlord.</div>`; return; }
+  if(!shown.length){
+    const msg = {due:"No follow-ups due today. Contact new prospects from “Next to contact”.", next:"Everyone in this area has been contacted.", pipe:"Nobody contacted yet. Start with “Next to contact”.", all:"No prospects in this area."}[view];
+    $("list").innerHTML=`<div class="empty"><strong>All clear</strong>${msg}</div>`; return;
+  }
+  $("list").innerHTML = shown.map(r=>{
+    const touches = r.touches||0;
+    const nextLbl = r.status==="New" ? "Log first contact" : touches>=4 ? "Log contact" : `Log follow-up ${touches}`;
+    const fu = r.next ? `<span class="chip ${isDue(r)?"wr":""}">Follow up ${esc(fmt(r.next))}</span>` : "";
+    const maps = "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(r.name+" "+(r.address||""));
+    const open = ["New","Contacted","Interested","Trial booked"].includes(r.status);
+    return `<article class="card ${isDue(r)?"due":""}">
+      <div class="top"><div><div class="nm">${esc(r.name)}</div><div class="meta">${esc(r.kind)} · ${esc(r.area)}${r.person?" · "+esc(r.person):""}</div></div><span class="ord">#${r.order||"–"}</span></div>
+      <div class="chips"><span class="chip st">${esc(r.status)}</span>${r.priority==="High"?'<span class="chip hi">High priority</span>':""}${touches?`<span class="chip">${touches} touch${touches>1?"es":""}</span>`:""}${fu}</div>
+      <div class="contact">${r.phone?`<span class="num">${esc(r.phone)}</span>`:""}${r.email?`<span>${esc(r.email)}</span>`:""}<a href="${maps}" target="_blank" rel="noopener">Map</a></div>
+      ${r.notes?`<div class="meta">${esc(r.notes)}</div>`:""}
+      <div class="acts">
+        ${open && r.phone?`<button class="pri" data-call="${esc(r.id)}" ${busy.has(r.id)?"disabled":""}>Call</button>`:""}
+        ${["New","Contacted","Interested"].includes(r.status)?`<button class="${r.phone?"gh":"pri"}" data-log="${esc(r.id)}" ${busy.has(r.id)?"disabled":""}>${nextLbl}</button>`:""}
+        <button class="gh" data-edit="${esc(r.id)}">Details</button>
+      </div>
+    </article>`;
+  }).join("");
+}
+
+function fillAreas(){
+  const areas=[...new Set(rows.map(r=>r.area).filter(Boolean))];
+  const order=a=>Math.min(...rows.filter(r=>r.area===a).map(r=>r.order||999));
+  areas.sort((a,b)=>order(a)-order(b));
+  const cur=$("areaSel").value;
+  $("areaSel").innerHTML=`<option value="">All areas</option>`+areas.map(a=>`<option ${a===cur?"selected":""}>${esc(a)}</option>`).join("");
+  $("areas").innerHTML=areas.map(a=>`<option value="${esc(a)}">`).join("");
+}
+
+document.querySelector(".tabs").addEventListener("click",e=>{
+  const b=e.target.closest(".tab"); if(!b) return; view=b.dataset.v;
+  document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-pressed",t===b)); render();
+});
+$("areaSel").addEventListener("change",()=>{ area=$("areaSel").value; render(); });
+
+$("list").addEventListener("click", async e=>{
+  const lg=e.target.closest("[data-log]"), ed=e.target.closest("[data-edit]"), cl=e.target.closest("[data-call]");
+  if(ed){ openForm(rows.find(r=>r.id===ed.dataset.edit)); return; }
+  if(cl){ openCall(rows.find(r=>r.id===cl.dataset.call)); return; }
+  if(lg && db){
+    const r=rows.find(x=>x.id===lg.dataset.log); if(!r||busy.has(r.id)) return;
+    const t=today(), touches=(r.touches||0)+1;
+    const upd={touches, last:t, status:r.status==="New"?"Contacted":r.status, next: touches<=3 ? addDays(t,GAPS[touches-1]) : ""};
+    if(!r.firstContact) upd.firstContact=t;
+    busy.add(r.id); render();
+    try{ await db.doc("prospects/"+r.id).update(upd); }catch(err){ showErr(err); }
+    busy.delete(r.id); render();
+  }
+});
+
+// ---------- call sheet ----------
+function opener(r){
+  const where = (r.area||"Birmingham").split("/")[0].trim();
+  const what = {"Block manager":"communal areas, bin stores and stairwells","Student / HMO":"student house and HMO changeovers","Short-let / serviced":"apartment turnovers","Commercial":"office and commercial cleaning","Facilities manager":"subcontract cleaning on your Birmingham sites"}[r.kind] || "end-of-tenancy and changeover cleans";
+  const when = r.last ? fmt(r.last).split(" ")[0] : "";
+  if(r.status==="Interested"||r.status==="Trial booked")
+    return ["Opener: warm lead", `"Hi${r.person?" "+r.person.split(/[ ,]/)[0]:""}, it's Alexandre from AVS Cleaning. Following up on our chat. Is there a check-out or changeover coming up we could take for you?"`, "Ask: book the first clean."];
+  if(r.status==="Contacted")
+    return ["Opener: follow-up", `"Hi, it's Alexandre from AVS Cleaning Services. I was in touch${when?" on "+when:""} about ${what} in ${where}. Who looks after booking cleaners for you?"`, "Ask: permission to send rates, or a trial clean."];
+  return ["Opener: cold call", `"Hi, it's Alexandre from AVS Cleaning Services in Birmingham. We do photo-checked ${what} for agents and landlords around ${where}. Who handles that for you?"`, "Ask: their email, so you can send rates and the insurance certificate."];
+}
+function openCall(r){
+  if(!r) return; calling=r;
+  $("cTitle").textContent=r.name;
+  $("cMeta").textContent=[r.kind, r.area, r.status].filter(Boolean).join(" · ");
+  $("cPhone").textContent=r.phone||"";
+  $("cDial").href="tel:"+(r.phone||"").replace(/[^\d+]/g,"");
+  $("cHist").textContent = r.touches ? `${r.touches} contact${r.touches>1?"s":""} so far${r.last?", last "+fmt(r.last):""}.` : "Not contacted yet.";
+  const [l,t,a]=opener(r); $("oLbl").textContent=l; $("oTxt").textContent=t; $("oAsk").textContent=a;
+  $("c-person").value=r.person||""; $("c-email").value=r.email||""; $("c-notes").value="";
+  $("cMsg").hidden=true; $("ratesRow").hidden=true;
+  document.querySelectorAll(".outs button").forEach(b=>b.disabled=false);
+  $("callScrim").hidden=false;
+}
+function closeCall(){ $("callScrim").hidden=true; calling=null; }
+$("cClose").onclick=closeCall;
+$("callScrim").addEventListener("click",e=>{ if(e.target===$("callScrim")) closeCall(); });
+$("cCopy").onclick=async()=>{ try{ await navigator.clipboard.writeText($("cPhone").textContent); $("cCopy").textContent="Copied"; setTimeout(()=>$("cCopy").textContent="Copy",1400);}catch(e){ const s=getSelection(),r=document.createRange(); r.selectNodeContents($("cPhone")); s.removeAllRanges(); s.addRange(r);} };
+
+const LABEL={noanswer:"No answer",voicemail:"Left voicemail",interested:"Interested, sending rates",trial:"Trial/quote booked",notnow:"Not now",stop:"Asked not to be called"};
+document.querySelector(".outs").addEventListener("click", async e=>{
+  const b=e.target.closest("[data-o]"); if(!b||!calling||!db) return;
+  const r=calling, o=b.dataset.o, t=today();
+  const person=$("c-person").value.trim(), email=$("c-email").value.trim(), extra=$("c-notes").value.trim();
+  let line=`[${fmt(t)} call] ${LABEL[o]}`; if(person) line+=`, spoke to ${person}`; if(extra) line+=`. ${extra}`;
+  const upd={ notes:(r.notes?r.notes+"\n":"")+line };
+  if(person) upd.person=person; if(email) upd.email=email;
+  const counts = o!=="noanswer";
+  if(counts){ upd.touches=(r.touches||0)+1; upd.last=t; if(!r.firstContact) upd.firstContact=t; }
+  if(o==="noanswer"){ upd.next=addWorkdays(t,1); }
+  if(o==="voicemail"){ upd.next=addWorkdays(t,2); if(r.status==="New") upd.status="Contacted"; }
+  if(o==="interested"){ upd.status="Interested"; upd.next=addWorkdays(t,2); }
+  if(o==="trial"){ upd.status="Trial booked"; upd.next=addWorkdays(t,2); }
+  if(o==="notnow"){ upd.status="Not now"; upd.next=addDays(t,90); }
+  if(o==="stop"){ upd.status="Not now"; upd.next=""; }
+  document.querySelectorAll(".outs button").forEach(x=>x.disabled=true);
+  try{
+    await db.doc("prospects/"+r.id).update(upd);
+    $("cMsg").textContent=`Saved: ${LABEL[o]}${upd.next?". Next follow-up "+fmt(upd.next):""}.`; $("cMsg").className="ok"; $("cMsg").hidden=false;
+    if(o==="interested"||o==="trial"){ $("ratesRow").hidden=false; $("cRatesTo").textContent=email||r.email||"their email"; }
+    else setTimeout(closeCall, 900);
+  }catch(err){ $("cMsg").textContent=errText(err); $("cMsg").className="err"; $("cMsg").hidden=false; document.querySelectorAll(".outs button").forEach(x=>x.disabled=false); }
+});
+function ratesEmail(){
+  const first=($("c-person").value.trim().split(/[ ,]/)[0])||"";
+  return `Subject: AVS Cleaning prices, as promised
+
+Hi${first?" "+first:""},
+
+Thanks for your time on the phone today. As promised, here are our fixed prices for end-of-tenancy, turnover and deep cleans (empty property):
+
+1-bed: £220
+2-bed: £290
+3-bed: £380
+4-bed HMO: £580
+5-bed HMO: £700
+6-bed HMO: £820
+Single HMO room: £120
+Furnished properties: +15%
+
+Communal areas, per visit: £180 (single HMO), £340 (block of up to about 10 flats), £520 (larger block with lifts and bin stores). Regular communal or portfolio work I'll price individually.
+
+Every clean includes inside the oven, hob, extractor and fridge, descaled bathrooms, and every room dusted, wiped and floors finished. You also get a dated photo report the same day and a free re-clean within 48 hours if anything is missed. Our insurance certificate is attached.
+
+To book, send me the address, date and access details, or use https://tally.so/r/rjNdDM, and I'll confirm with a secure card payment link.
+
+Kind regards,
+Alexandre
+Founder, AVS Cleaning Services
+avscleaningservices6@gmail.com | 07828 714805`;
+}
+$("cRates").onclick=async()=>{
+  const txt=ratesEmail();
+  try{ await navigator.clipboard.writeText(txt); $("cRates").textContent="Copied"; setTimeout(()=>$("cRates").textContent="Copy rates email",1600); }
+  catch(e){ $("c-notes").value=txt; $("c-notes").select(); $("cMsg").textContent="Copy didn't work here. The email is in the notes box, selected."; $("cMsg").hidden=false; }
+};
+
+// ---------- details form ----------
+function openForm(r){
+  editing=r||null; confirmDel=false;
+  $("fTitle").textContent = r ? r.name : "New prospect";
+  $("f-name").value=r?.name||""; $("f-kind").value=r?.kind||"Letting agent"; $("f-area").value=r?.area||"";
+  $("f-person").value=r?.person||""; $("f-phone").value=r?.phone||""; $("f-email").value=r?.email||"";
+  $("f-address").value=r?.address||""; $("f-status").value=r?.status||"New"; $("f-next").value=r?.next||""; $("f-notes").value=r?.notes||"";
+  $("delBtn").hidden=!r; $("delBtn").textContent="Delete"; $("fErr").hidden=true; $("scrim").hidden=false;
+}
+function closeForm(){ $("scrim").hidden=true; editing=null; }
+$("addBtn").onclick=()=>openForm(null);
+$("cancelBtn").onclick=closeForm;
+$("scrim").addEventListener("click",e=>{ if(e.target===$("scrim")) closeForm(); });
+$("form").addEventListener("submit", async e=>{
+  e.preventDefault(); if(!db){ fErr("Saving isn't available here. Open the tracker in the Claude app while signed in."); return; }
+  const data={name:$("f-name").value.trim(),kind:$("f-kind").value,area:$("f-area").value.trim()||"Birmingham",person:$("f-person").value.trim(),phone:$("f-phone").value.trim(),email:$("f-email").value.trim(),address:$("f-address").value.trim(),status:$("f-status").value,next:$("f-next").value,notes:$("f-notes").value.trim()};
+  $("saveBtn").disabled=true;
+  try{
+    if(editing) await db.doc("prospects/"+editing.id).update(data);
+    else await db.collection("prospects").add({...data,order:Math.max(0,...rows.map(r=>r.order||0))+1,priority:"Normal",touches:0});
+    closeForm();
+  }catch(err){ fErr(errText(err)); }
+  $("saveBtn").disabled=false;
+});
+$("delBtn").onclick=async()=>{
+  if(!editing) return;
+  if(!confirmDel){ confirmDel=true; $("delBtn").textContent="Tap again to delete"; return; }
+  try{ await db.doc("prospects/"+editing.id).delete(); closeForm(); }catch(err){ fErr(errText(err)); }
+};
+function errText(err){ const c=err&&err.code; if(c==="quota_exceeded") return "The tracker is full. Delete some old prospects and try again."; if(c==="invalid_argument") return "You can view this tracker but not change it."; return "Couldn't save. Check your connection and try again."; }
+function fErr(m){ $("fErr").textContent=m; $("fErr").hidden=false; }
+function showErr(err){ $("topErr").textContent=errText(err); $("topErr").hidden=false; setTimeout(()=>$("topErr").hidden=true,5000); }
+
+(async()=>{
+  try{ db = await window.claude?.use?.("db"); }catch(e){ db=null; }
+  if(!db){ $("list").innerHTML=`<div class="empty"><strong>Can't load prospects here</strong>Open the tracker in your Claude app while signed in.</div>`; $("addBtn").hidden=true; return; }
+  db.collection("prospects").onSnapshot(snap=>{
+    rows=snap.docs.map(d=>({id:d.id,...d.data()}));
+    fillAreas(); render();
+    if(calling){ const fresh=rows.find(r=>r.id===calling.id); if(fresh) calling=fresh; }
+  }, ()=>{ $("list").innerHTML=`<div class="empty"><strong>Couldn't load prospects</strong>Close and reopen the tracker.</div>`; });
+})();
+</script>

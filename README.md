@@ -1,37 +1,29 @@
-# AVS Cleaning Services: Autopilot
+# AVS Cleaning Services
 
-Automation that takes the admin and outreach prep off Alexandre's plate, so his time goes on calls,
-emails and closing.
+Notes and source for the automation around AVS Cleaning (Birmingham). The live system is **AVS OS**:
+scheduled Claude tasks plus a few artifact pages, with Airtable as the system of record.
 
-## How it works
-Four scheduled Claude runs read Gmail, Airtable, Stripe and Tally, then **prepare** everything:
-replies, quotes and follow-ups appear as **Gmail drafts**, Airtable is kept up to date, and a short
-brief is pushed to his phone. Nothing is ever sent to a client, prospect or cleaner automatically.
+## What runs (claude.ai → Scheduled tasks)
+| Task | When | Does |
+|---|---|---|
+| AVS OS sync | Hourly (full 06:00, light 18:00, quick otherwise) | Gmail replies, booking-form acknowledgements, **price-list quote drafts with a Stripe payment link**, applicant vetting, outreach follow-ups, Stripe → Airtable, AVS OS snapshot |
+| AVS daily lead outreach | Weekdays 09:47 | Finds new leads, sends cold emails and one follow-up, hands interested leads over |
+| AVS daily job briefing | Hourly | Job briefing |
+| AVS applicant tracker | Daily 21:52 | Records applicants from Gmail and the "Clean with AVS" form in Airtable |
+| AVS Friday pay run | Fri 08:56 | Who to pay this week |
 
-| Run | When (UK time) | Playbook | What you get |
-|---|---|---|---|
-| Daily Autopilot | Mon-Fri 07:55 | [`autopilot/daily.md`](autopilot/daily.md) | Morning brief, 10-name call list, drafts for follow-ups / quotes / applicants / prospect replies, CRM updated, ops alerts |
-| Monday Prospecting | Mon 08:52 | [`autopilot/weekly-prospecting.md`](autopilot/weekly-prospecting.md) | 15 new researched prospects in Airtable + personalised first-email drafts |
-| Quote Desk | Every hour 08:07–20:07 | [`autopilot/quote-desk.md`](autopilot/quote-desk.md) | Each booking-form submission turned into an Airtable record, a Stripe payment link and a quote draft, inside the form's 2-hour promise |
-| Friday Review | Fri 15:57 | [`autopilot/friday-review.md`](autopilot/friday-review.md) | Scorecard vs £15k target + next week's top 3 actions (written to Management Actions) |
+Airtable is on the free plan (1,000 API calls a month), so every task rations its calls.
 
-Facts, prices, rules and Airtable IDs all live in [`autopilot/business.md`](autopilot/business.md).
-**Change prices or rules there**, then ask Claude to "sync the autopilot tasks" so the scheduled runs
-pick up the change.
+## Quoting
+The "Book an AVS Clean" form (https://tally.so/r/rjNdDM) shows the customer a fixed price (furnished +15%).
+AVS OS sync acknowledges the booking, then saves a **Gmail draft** with the quote and a Stripe payment link.
+Alexandre reviews and sends it. Anything off the price list comes to him as "Price needed".
+Prices live in [`autopilot/business.md`](autopilot/business.md); if they change, the AVS OS sync task and the
+form must be updated too.
 
-## Call Cockpit
-[`tools/call-cockpit.html`](tools/call-cockpit.html) is published at https://claude.ai/artifact/S52EFfpAZCD7JTmjUEGDfV.
-It reads the Airtable Customers table live and sorts leads into three queues: **Warm** (replied, interested,
-quote out), **Follow-up** (emailed 2+ days ago or due today) and **Cold** (phone-only, never contacted).
-Each lead gets a tailored opener, objection handlers and the price card. Pick an outcome and save: Sales Stage,
-Next Follow-up and a dated call note are written back to Airtable. "Interested: send rates" makes the next
-Daily Autopilot draft the rates email.
-
-## Alexandre's daily loop (≈10 min admin)
-1. Read the morning brief on your phone.
-2. Open Gmail → Drafts. Skim and send (or tweak). Attach the insurance PDF where the brief says so.
-3. Open the Call Cockpit and work the queues. Log every call with one tap; the autopilot does the follow-up.
-
-## Follow-up cadence
-Day 0 first email → Day 5 nudge (new angle) → Day 12 close-the-loop → Lost + 90-day nurture check-in.
-A reply at any point stops the sequence and moves the lead to the top of the call list.
+## Calling
+[`tools/prospect-tracker.html`](tools/prospect-tracker.html) is the AVS Prospect Tracker
+(https://claude.ai/artifact/KeVkbjC5z52KAXCaVheGVg). Tap **Call** on a prospect for a tailored opener,
+objection handlers and the price card, then log the outcome (no answer, voicemail, interested, trial booked,
+not now). Follow-up dates set themselves. "Interested" offers a ready-to-paste rates email. It uses the page's
+own storage, so it costs no Airtable calls.
