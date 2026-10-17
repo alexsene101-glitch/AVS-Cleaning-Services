@@ -26,7 +26,15 @@ a 10-minute call or the chance to quote their next changeover. If they ask for i
 attached and flag "ATTACH INSURANCE PDF" in the brief, because drafts can't carry the attachment.
 Put every replied prospect at the TOP of today's call list.
 
+## 2b. Call-log actions (from the Call Cockpit)
+Customers whose Customer Notes have an "ACTION: email rates" call-log line newer than our last email: draft the
+rates email (thank them for the call by name, price table, what's included, booking form link, offer to price
+regular/communal work), flag "ATTACH INSURANCE PDF", change the note's "ACTION:" to "DONE (rates drafted <date>):",
+and set Sales Stage = Quote Sent, Next Follow-up = +3 working days.
+
 ## 3. New enquiries → quote drafts
+The hourly Quote Desk (`quote-desk.md`) handles booking-form submissions; this step only catches emailed
+enquiries and any form bookings it missed.
 1. Make sure an Airtable Booking Request exists; create one if not (Status per the table's options).
 2. Extract: property type, bedrooms, clean type, furnished?, area/postcode, preferred date, frequency.
 3. If anything needed to price is missing, draft a short reply asking only for those details.
@@ -50,6 +58,7 @@ in it:
 After drafting: Sales Stage = Follow-up, Next Follow-up = +5 working days, and add the note "Touch N drafted <date>".
 Don't change Last Outreach Date until the draft actually appears in `in:sent`. On each run, check yesterday's drafts:
 if they were sent, set Last Outreach Date to the send date.
+Skip anyone handled in 2b today or called in the last 2 working days.
 Cap at 25 follow-up drafts per day; the oldest due go first.
 
 ## 5. Cleaner applicants

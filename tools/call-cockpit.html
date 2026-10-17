@@ -1,0 +1,474 @@
+<title>AVS Call Cockpit</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap">
+<style>
+/* Layout: a dialer. Queue rail on the left (top on phones), one lead card centre stage,
+   script + objections + price card beside it. Built to be used mid-call, one-handed. */
+:root{
+  --bg:#eef2f0; --panel:#ffffff; --ink:#14231f; --muted:#5b6b66; --line:#d5ddd9;
+  --accent:#0f6e62; --accent-ink:#ffffff; --accent-soft:#dcefe9;
+  --warm:#b4540f; --warm-soft:#fbe9da; --bad:#a3302a; --bad-soft:#f7e1df; --ok:#2d7a3a; --ok-soft:#e1f1e3;
+  --font-display:"Archivo","Arial Narrow",system-ui,sans-serif;
+  --font-body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1614; --panel:#16211e; --ink:#e4ece9; --muted:#97a8a2; --line:#2a3834;
+  --accent:#3cb7a4; --accent-ink:#06201b; --accent-soft:#163a34;
+  --warm:#f0a265; --warm-soft:#3a2615; --bad:#ef8a83; --bad-soft:#3a1c1a; --ok:#7fd08c; --ok-soft:#183020; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1614; --panel:#16211e; --ink:#e4ece9; --muted:#97a8a2; --line:#2a3834;
+  --accent:#3cb7a4; --accent-ink:#06201b; --accent-soft:#163a34;
+  --warm:#f0a265; --warm-soft:#3a2615; --bad:#ef8a83; --bad-soft:#3a1c1a; --ok:#7fd08c; --ok-soft:#183020; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{background:var(--bg);color:var(--ink)}
+body{font-family:var(--font-body);font-size:15px;line-height:1.45;padding-block:16px 40px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-display);font-stretch:85%;margin:0;text-wrap:balance}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+header.top h1{font-size:28px;font-weight:800;letter-spacing:-.01em}
+header.top .sub{color:var(--muted);font-size:13px}
+.tally{display:flex;gap:8px;flex-wrap:wrap}
+.tally div{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:6px 12px;min-width:84px}
+.tally b{display:block;font-family:var(--font-display);font-size:22px;font-variant-numeric:tabular-nums;line-height:1.1}
+.tally span{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+
+.banner{border-radius:var(--r);padding:10px 14px;font-size:14px;border:1px solid var(--line);background:var(--panel)}
+.banner.warn{background:var(--warm-soft);border-color:transparent}
+.banner.bad{background:var(--bad-soft);border-color:transparent}
+.banner button{margin-left:8px}
+
+.grid{display:grid;grid-template-columns:280px minmax(0,1fr) 320px;gap:14px;align-items:start}
+@media (max-width:1080px){.grid{grid-template-columns:240px minmax(0,1fr)}.side{grid-column:1/-1}}
+@media (max-width:720px){.grid{grid-template-columns:minmax(0,1fr)}}
+
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r)}
+.rail{display:flex;flex-direction:column;max-height:calc(100vh - 140px);min-height:200px}
+@media (max-width:720px){.rail{max-height:300px}}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--line)}
+.tabs button{border:0;background:none;padding:10px 4px;font-size:13px;border-bottom:3px solid transparent;color:var(--muted)}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent);font-weight:700}
+.tabs .n{font-variant-numeric:tabular-nums;display:inline-block;min-width:1.6em;border-radius:99px;background:var(--accent-soft);color:var(--ink);font-size:11px;padding:0 5px;margin-left:3px}
+.list{overflow:auto;flex:1;padding:6px}
+.list button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:left;border:0;background:none;border-radius:8px;padding:8px 10px}
+.list button:hover{background:var(--accent-soft)}
+.list button[aria-current="true"]{background:var(--accent);color:var(--accent-ink)}
+.list button[aria-current="true"] .meta{color:inherit;opacity:.85}
+.list .nm{font-weight:700;font-size:14px}
+.list .meta{font-size:12px;color:var(--muted)}
+.empty{color:var(--muted);font-size:13px;padding:14px}
+
+.card{padding:18px;display:flex;flex-direction:column;gap:14px}
+.who{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;align-items:flex-start}
+.who h2{font-size:30px;font-weight:800;line-height:1.05}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chip{font-size:12px;padding:2px 8px;border-radius:99px;background:var(--accent-soft)}
+.chip.warm{background:var(--warm-soft);color:var(--warm);font-weight:700}
+.chip.bad{background:var(--bad-soft);color:var(--bad)}
+.phone{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.phone .num{font-family:var(--font-display);font-size:32px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.01em;user-select:all}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:7px 12px;font-size:14px}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700}
+.btn:disabled{opacity:.5;cursor:default}
+a.btn{text-decoration:none;display:inline-block}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px 18px;font-size:14px}
+.facts dt{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.facts dd{margin:0;overflow-wrap:anywhere}
+.notes{font-size:13px;color:var(--muted);white-space:pre-wrap;max-height:110px;overflow:auto;border-left:3px solid var(--line);padding-left:10px}
+
+.opener{background:var(--accent-soft);border-radius:var(--r);padding:14px 16px}
+.opener h3{font-size:13px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.opener p{margin:0;font-size:17px;line-height:1.5;max-width:65ch}
+.opener .ask{margin-top:8px;font-weight:700}
+
+.log{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:14px}
+.log h3{font-size:16px}
+.outcomes{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.outcomes button{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:10px;text-align:left;font-size:14px}
+.outcomes button small{display:block;color:var(--muted);font-size:12px}
+.outcomes button[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:var(--accent-soft)}
+.outcomes .good{border-left:4px solid var(--ok)}
+.outcomes .meh{border-left:4px solid var(--warm)}
+.outcomes .no{border-left:4px solid var(--bad)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row label{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:3px;flex:1;min-width:150px}
+input[type=text],input[type=date],input[type=email],input[type=tel],textarea{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:8px 10px;width:100%}
+textarea{min-height:60px;resize:vertical}
+.status{font-size:13px;min-height:1.2em}
+.status.ok{color:var(--ok)} .status.err{color:var(--bad)}
+
+.side{display:flex;flex-direction:column;gap:14px}
+.side section{padding:14px 16px}
+.side h3{font-size:16px;margin-bottom:8px}
+details{border-top:1px solid var(--line);padding:8px 0}
+details:first-of-type{border-top:0}
+summary{cursor:pointer;font-weight:700;font-size:14px}
+details p{margin:6px 0 0;font-size:14px}
+table.prices{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+table.prices td{padding:4px 0;border-bottom:1px solid var(--line)}
+table.prices td:last-child{text-align:right;font-weight:700}
+.hint{font-size:12px;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){.card{transition:opacity .15s}}
+.loading{opacity:.55}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>AVS Call Cockpit</h1>
+      <div class="sub" id="today">Live from your Airtable Customers table</div>
+    </div>
+    <div class="tally" aria-label="Today's numbers">
+      <div><b id="t-calls">0</b><span>Calls logged</span></div>
+      <div><b id="t-convos">0</b><span>Conversations</span></div>
+      <div><b id="t-wins">0</b><span>Interested</span></div>
+      <button class="btn" id="refresh" type="button">Refresh list</button>
+    </div>
+  </header>
+
+  <div id="banner" class="banner" hidden></div>
+
+  <div class="grid">
+    <nav class="panel rail" aria-label="Call queue">
+      <div class="tabs" role="tablist">
+        <button role="tab" id="tab-warm" aria-selected="true" data-q="warm">Warm<span class="n" id="n-warm">0</span></button>
+        <button role="tab" id="tab-due" aria-selected="false" data-q="due">Follow-up<span class="n" id="n-due">0</span></button>
+        <button role="tab" id="tab-cold" aria-selected="false" data-q="cold">Cold<span class="n" id="n-cold">0</span></button>
+      </div>
+      <div class="list" id="list"><div class="empty">Loading your leads from Airtable…</div></div>
+    </nav>
+
+    <main class="panel card" id="card" aria-live="polite">
+      <div class="who">
+        <div>
+          <h2 id="c-name">Melvyn Danes Lettings</h2>
+          <div class="chips" id="c-chips"><span class="chip warm">Example lead</span><span class="chip">Letting Agent</span><span class="chip">Shirley / Solihull</span></div>
+        </div>
+        <div class="phone">
+          <span class="num" id="c-phone">0121 733 7334</span>
+          <button class="btn" id="copy" type="button">Copy</button>
+          <a class="btn primary" id="dial" href="tel:01217337334">Call</a>
+        </div>
+      </div>
+      <dl class="facts" id="c-facts">
+        <div><dt>Stage</dt><dd>Quote Sent</dd></div>
+        <div><dt>Last emailed</dt><dd>16 Oct</dd></div>
+        <div><dt>Opportunity</dt><dd>End-of-tenancy and changeover cleans</dd></div>
+        <div><dt>Email</dt><dd>lettings@melvyndanes.co.uk</dd></div>
+      </dl>
+      <div class="notes" id="c-notes">This card is an example. Your real leads load from Airtable in a moment.</div>
+
+      <div class="opener">
+        <h3 id="o-title">Opener: warm lead</h3>
+        <p id="o-text">"Hi, it's Alexandre from AVS Cleaning. I sent over our price sheet and insurance on Friday. Did it land OK with the lettings team?"</p>
+        <p class="ask" id="o-ask">Ask: book a 10-minute call to set up their next changeover.</p>
+      </div>
+
+      <div class="log">
+        <h3>Log this call</h3>
+        <div class="outcomes" role="group" aria-label="Call outcome">
+          <button type="button" class="meh" data-o="noanswer">No answer<small>Try again next working day</small></button>
+          <button type="button" class="meh" data-o="voicemail">Left voicemail<small>Retry in 2 working days</small></button>
+          <button type="button" class="meh" data-o="callback">Call back on…<small>Pick the date below</small></button>
+          <button type="button" class="good" data-o="interested">Interested: send rates<small>Autopilot drafts the email</small></button>
+          <button type="button" class="good" data-o="quote">Quote / trial agreed<small>Stage: Quote Sent</small></button>
+          <button type="button" class="no" data-o="notnow">Not interested<small>Check back in 90 days</small></button>
+          <button type="button" class="no" data-o="dnc">Do not contact<small>Removes from all queues</small></button>
+        </div>
+        <div class="row">
+          <label for="f-contact">Who you spoke to<input type="text" id="f-contact" placeholder="e.g. Sarah, lettings manager"></label>
+          <label for="f-email">Their email (if new)<input type="email" id="f-email" placeholder="name@agency.co.uk"></label>
+          <label for="f-date">Date (call back / follow-up)<input type="date" id="f-date"></label>
+        </div>
+        <label for="f-note" class="hint">Notes: portfolio size, current cleaner, pain points, timing
+          <textarea id="f-note" placeholder="e.g. ~40 managed units, unhappy with current cleaner on check-outs, busy period is June"></textarea>
+        </label>
+        <div class="row">
+          <button class="btn primary" id="save" type="button" disabled>Save &amp; next lead</button>
+          <button class="btn" id="skip" type="button">Skip</button>
+          <span class="status" id="status" role="status"></span>
+        </div>
+      </div>
+    </main>
+
+    <aside class="side">
+      <section class="panel">
+        <h3>If they say…</h3>
+        <details open><summary>"We already have a cleaner."</summary>
+          <p>"Makes sense, most agents we speak to do. Would it help to have us as backup for the busy check-out weeks? Your first clean comes with a full dated photo report, so you can compare."</p></details>
+        <details><summary>"Just send me an email."</summary>
+          <p>"Happy to. Who should I put it for the attention of, and what's the best address? Then I'll send our price sheet and insurance certificate today."</p></details>
+        <details><summary>"How much do you charge?"</summary>
+          <p>Give the fixed price from the table, then: "That includes the inside of the oven and fridge, a dated photo report the same day, and a free re-clean within 48 hours if anything's missed."</p></details>
+        <details><summary>"That's more than we pay."</summary>
+          <p>"We're not the cheapest and we don't try to be. A failed check-out or a deposit dispute costs more than the difference. The photo report is your evidence, and the re-clean is on us."</p></details>
+        <details><summary>"We do it in-house / tenants clean."</summary>
+          <p>"Understood. When a tenant leaves it in a state, or you've got a quick turnaround, would it help to have someone you can book same week? Can I send our rates so they're on file?"</p></details>
+        <details><summary>Gatekeeper / reception</summary>
+          <p>"Hi, it's Alexandre from AVS Cleaning. Who looks after booking cleaners for your check-outs and communal areas? Could you put me through, or give me their email?"</p></details>
+      </section>
+      <section class="panel">
+        <h3>Price card</h3>
+        <table class="prices">
+          <tr><td>Single HMO room</td><td>£120</td></tr>
+          <tr><td>1-bed</td><td>£220</td></tr>
+          <tr><td>2-bed</td><td>£290</td></tr>
+          <tr><td>3-bed</td><td>£380</td></tr>
+          <tr><td>4-bed HMO</td><td>£580</td></tr>
+          <tr><td>5-bed HMO</td><td>£700</td></tr>
+          <tr><td>6-bed HMO</td><td>£820</td></tr>
+          <tr><td>Communal: single HMO</td><td>£180</td></tr>
+          <tr><td>Communal: block ≤10 flats</td><td>£340</td></tr>
+          <tr><td>Communal: large block</td><td>£520</td></tr>
+        </table>
+        <p class="hint">End of tenancy / turnover / deep, empty property. Furnished +15%. Regular contracts quoted individually. Prepaid by card link.</p>
+      </section>
+    </aside>
+  </div>
+</div>
+
+<script>
+(function(){
+  const BASE = "appge0DudNjJ2Yg19", TABLE = "tbl9yc1i8NKUsvpNv";
+  const F = {
+    name:"fldT8kXwqBOIqA8t5", email:"fldksWN6w9ZRdGZOn", phone:"fldOrGzZbk7s2nzzz", contact:"fldOgA1Uy7Ix2pYYr",
+    type:"flduDLaa9lXloxoEh", status:"fld72iLWV6vJqFjCB", stage:"fldilQaxUAPvtRZ5H", outreach:"fldcuFb7peaNyqq11",
+    sector:"fldNSIfOlkWTdmz0l", area:"fldjP4OHuj3OGPUX4", site:"fldiylFH5dDcBsGEy", next:"fldDmq4w0QQty58r6",
+    last:"fldUAMEupcHwfFbgm", opp:"fldrbw88qDf8RArsH", notes:"fldWx93cEhfZyUiGo"
+  };
+  const $ = id => document.getElementById(id);
+  let mcp = null, leads = [], queues = {warm:[],due:[],cold:[]}, tab = "warm", current = null, outcome = null, busy = false;
+
+  // ---------- dates ----------
+  const pad = n => String(n).padStart(2,"0");
+  const iso = d => d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+  const todayIso = iso(new Date());
+  const addWorkdays = (n) => { const d = new Date(); let k = 0; while(k < n){ d.setDate(d.getDate()+1); const w = d.getDay(); if(w!==0 && w!==6) k++; } return iso(d); };
+  const addDays = (n) => { const d = new Date(); d.setDate(d.getDate()+n); return iso(d); };
+  const pretty = s => { if(!s) return "—"; const d = new Date(s+"T12:00:00"); return isNaN(d) ? s : d.toLocaleDateString("en-GB",{day:"numeric",month:"short"}); };
+  const daysAgo = s => s ? Math.round((new Date(todayIso+"T12:00:00") - new Date(s+"T12:00:00"))/864e5) : null;
+  $("today").textContent = new Date().toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"}) + " · live from your Airtable Customers table";
+  $("f-date").value = addWorkdays(1);
+
+  // ---------- today's tally (this browser only) ----------
+  const TKEY = "avs-cockpit-" + todayIso;
+  let tally = {calls:0, convos:0, wins:0};
+  try { const s = localStorage.getItem(TKEY); if(s) tally = JSON.parse(s); } catch(e){}
+  const showTally = () => { $("t-calls").textContent = tally.calls; $("t-convos").textContent = tally.convos; $("t-wins").textContent = tally.wins; };
+  const bump = (o) => { tally.calls++; if(["callback","interested","quote","notnow","dnc"].includes(o)) tally.convos++; if(["interested","quote"].includes(o)) tally.wins++; try{ localStorage.setItem(TKEY, JSON.stringify(tally)); }catch(e){} showTally(); };
+  showTally();
+
+  // ---------- banner ----------
+  function banner(kind, text, action){
+    const b = $("banner"); b.hidden = false; b.className = "banner " + (kind||""); b.textContent = text;
+    if(action){ const btn = document.createElement("button"); btn.className = "btn"; btn.type = "button"; btn.textContent = action.label; btn.onclick = action.fn; b.appendChild(btn); }
+  }
+  function errText(e){
+    switch(e && e.code){
+      case "server_not_connected": return "Airtable isn't connected for this page. Add Airtable in claude.ai Settings → Connectors, then reload.";
+      case "needs_reauth": return "Your Airtable connection has expired. Reconnect Airtable in claude.ai Settings → Connectors, then reload.";
+      case "not_in_manifest": case "approval_required": return "This page needs your permission to use Airtable. Allow it from the artifact's Permissions menu, then press Refresh list.";
+      case "selection_required": return "You have more than one Airtable connector. Choose one when claude.ai asks, then press Refresh list.";
+      case "blocked_by_policy": return "Your organisation's policy blocks this Airtable action.";
+      case "server_unavailable": return "Airtable didn't answer just now. Press Refresh list in a moment.";
+      case "tool_error": return "Airtable rejected the request: " + (e.message || "unknown error");
+      default: return "Couldn't reach Airtable (" + ((e && e.code) || "error") + "). Press Refresh list to try again.";
+    }
+  }
+
+  // ---------- data ----------
+  const sel = v => v && typeof v === "object" ? (v.name || "") : (v || "");
+  function parse(rec){
+    const c = rec.cellValuesByFieldId || rec.fields || {};
+    return { id: rec.id, name: c[F.name] || "(no name)", email: c[F.email] || "", phone: c[F.phone] || "", contact: c[F.contact] || "",
+      type: sel(c[F.type]), status: sel(c[F.status]), stage: sel(c[F.stage]), outreach: sel(c[F.outreach]), sector: sel(c[F.sector]),
+      area: c[F.area] || "", site: c[F.site] || "", next: c[F.next] || "", last: c[F.last] || "", opp: c[F.opp] || "", notes: c[F.notes] || "" };
+  }
+  function build(){
+    const dead = new Set(["Not a fit","Do Not Contact","Won"]);
+    queues = {warm:[],due:[],cold:[]};
+    for(const l of leads){
+      if(dead.has(l.stage) || l.status === "Do Not Contact" || l.outreach === "Opted Out") continue;
+      const due = l.next && l.next <= todayIso;
+      if(l.stage === "Lost"){ if(due) queues.due.push(l); continue; }
+      if(["Interested","Quote Sent"].includes(l.stage) || l.outreach === "Replied"){ queues.warm.push(l); continue; }
+      if(["Contacted","Follow-up","Contact Scheduled"].includes(l.stage)){
+        if(due || (l.stage !== "Contact Scheduled" && (daysAgo(l.last) ?? 0) >= 2)) queues.due.push(l);
+        continue;
+      }
+      if((!l.stage || l.stage === "New Prospect") && l.outreach !== "Scheduled" && l.phone) queues.cold.push(l);
+    }
+    const byNext = (a,b) => (a.next||"9999").localeCompare(b.next||"9999");
+    const phoneFirst = (a,b) => (b.phone?1:0) - (a.phone?1:0);
+    queues.warm.sort((a,b) => phoneFirst(a,b) || byNext(a,b));
+    queues.due.sort((a,b) => phoneFirst(a,b) || (a.last||"").localeCompare(b.last||""));
+    queues.cold.sort((a,b) => a.name.localeCompare(b.name));
+    for(const k of Object.keys(queues)) $("n-"+k).textContent = queues[k].length;
+  }
+  async function load(){
+    if(!mcp){ return; }
+    $("list").innerHTML = '<div class="empty">Loading your leads from Airtable…</div>';
+    try{
+      const res = await mcp.callTool("Airtable","list_records_for_table",{ baseId: BASE, tableId: TABLE, pageSize: 1000,
+        fieldIds: Object.values(F) }, { cache:false });
+      const p = res.payload || {};
+      leads = (p.records || []).map(parse);
+      $("banner").hidden = true;
+      build(); renderList();
+      const keep = current && leads.find(l => l.id === current.id);
+      if(keep && queues[tab].includes(keep)) show(keep); else show(queues[tab][0] || null);
+    }catch(e){
+      $("list").innerHTML = '<div class="empty">Leads couldn\'t load.</div>';
+      banner(e && e.code === "server_unavailable" ? "warn" : "bad", errText(e), {label:"Try again", fn: load});
+    }
+  }
+
+  // ---------- render ----------
+  function renderList(){
+    const box = $("list"); box.innerHTML = "";
+    const q = queues[tab];
+    if(!q.length){
+      const msg = {warm:"No warm leads right now. Replies and quotes land here.", due:"No follow-up calls due today.", cold:"No uncalled phone-only leads left. Monday Prospecting adds more."}[tab];
+      box.innerHTML = '<div class="empty"></div>'; box.firstChild.textContent = msg; return;
+    }
+    for(const l of q){
+      const b = document.createElement("button"); b.type = "button";
+      if(current && current.id === l.id) b.setAttribute("aria-current","true");
+      const nm = document.createElement("span"); nm.className = "nm"; nm.textContent = l.name;
+      const mt = document.createElement("span"); mt.className = "meta";
+      const bits = [l.area, l.phone ? l.phone : "no number"];
+      if(tab === "due" && l.last) bits.push("emailed " + pretty(l.last));
+      if(tab === "warm" && l.stage) bits.push(l.stage);
+      mt.textContent = bits.filter(Boolean).join(" · ");
+      b.append(nm, mt); b.onclick = () => show(l); box.appendChild(b);
+    }
+  }
+  function opener(l){
+    const area = l.area ? l.area.split("/")[0].trim() : "Birmingham";
+    const when = l.last ? (daysAgo(l.last) <= 6 ? new Date(l.last+"T12:00:00").toLocaleDateString("en-GB",{weekday:"long"}) : pretty(l.last)) : "";
+    if(tab === "warm"){
+      if(l.stage === "Quote Sent") return ["Opener: quote out", `"Hi, it's Alexandre from AVS Cleaning. I sent over our prices${when?" on "+when:""}. Did they land OK, and is there a check-out coming up we could take for you?"`, "Ask: book the first clean or a 10-minute call."];
+      return ["Opener: they replied", `"Hi, it's Alexandre from AVS Cleaning. Thanks for getting back to me${when?" "+when:""}. I wanted to put a voice to the email. How many properties are you looking after at the moment?"`, "Ask: quote their next changeover, or a trial clean."];
+    }
+    if(tab === "due"){
+      return ["Opener: after the email", `"Hi, it's Alexandre from AVS Cleaning Services. I emailed${when?" on "+when:""} about end-of-tenancy and communal cleans in ${area}. Who looks after booking cleaners for your check-outs?"`, "Ask: permission to send rates, or a trial clean."];
+    }
+    return ["Opener: cold call", `"Hi, it's Alexandre from AVS Cleaning Services in Birmingham. We do photo-checked end-of-tenancy and communal cleans for agents and landlords around ${area}. Who handles your changeovers?"`, "Ask: their email so you can send rates and the insurance certificate."];
+  }
+  function chip(text, cls){ const s = document.createElement("span"); s.className = "chip" + (cls?" "+cls:""); s.textContent = text; return s; }
+  function show(l){
+    current = l; outcome = null; setOutcome(null);
+    $("f-contact").value = ""; $("f-email").value = ""; $("f-note").value = ""; $("f-date").value = addWorkdays(1); $("status").textContent = "";
+    renderList();
+    if(!l){
+      $("c-name").textContent = "Queue clear"; $("c-chips").innerHTML = ""; $("c-phone").textContent = "—";
+      $("dial").removeAttribute("href"); $("c-facts").innerHTML = ""; $("c-notes").textContent = "Pick another tab, or press Refresh list.";
+      $("save").disabled = true; return;
+    }
+    $("c-name").textContent = l.name;
+    const chips = $("c-chips"); chips.innerHTML = "";
+    if(l.stage) chips.appendChild(chip(l.stage, ["Interested","Quote Sent"].includes(l.stage) ? "warm" : ""));
+    if(l.outreach === "Replied") chips.appendChild(chip("Replied", "warm"));
+    if(l.outreach === "Bounced") chips.appendChild(chip("Email bounced", "bad"));
+    if(l.sector) chips.appendChild(chip(l.sector));
+    if(l.area) chips.appendChild(chip(l.area));
+    $("c-phone").textContent = l.phone || "No number yet";
+    if(l.phone) $("dial").setAttribute("href","tel:"+l.phone.replace(/[^\d+]/g,"")); else $("dial").removeAttribute("href");
+    const facts = [["Stage", l.stage || "Not contacted"], ["Last emailed", pretty(l.last)], ["Next follow-up", pretty(l.next)],
+      ["Contact", l.contact || "—"], ["Email", l.email || "—"], ["Opportunity", l.opp || "—"]];
+    if(l.site) facts.push(["Website", l.site]);
+    const dl = $("c-facts"); dl.innerHTML = "";
+    for(const [k,v] of facts){ const d = document.createElement("div"); const dt = document.createElement("dt"); dt.textContent = k; const dd = document.createElement("dd"); dd.textContent = v; d.append(dt,dd); dl.appendChild(d); }
+    $("c-notes").textContent = l.notes || "No notes yet.";
+    const [t, txt, ask] = opener(l); $("o-title").textContent = t; $("o-text").textContent = txt; $("o-ask").textContent = ask;
+    $("save").disabled = true;
+  }
+  function setOutcome(o){
+    outcome = o;
+    document.querySelectorAll(".outcomes button").forEach(b => b.setAttribute("aria-pressed", b.dataset.o === o ? "true" : "false"));
+    if(o === "voicemail") $("f-date").value = addWorkdays(2);
+    else if(o === "notnow") $("f-date").value = addDays(90);
+    else if(o === "interested") $("f-date").value = todayIso;
+    else if(o === "quote") $("f-date").value = addWorkdays(2);
+    else if(o === "noanswer") $("f-date").value = addWorkdays(1);
+    $("save").disabled = !o || !current || !mcp || busy;
+  }
+
+  // ---------- save ----------
+  const LABEL = {noanswer:"No answer", voicemail:"Left voicemail", callback:"Asked to call back", interested:"Interested, send rates", quote:"Quote/trial agreed", notnow:"Not interested", dnc:"Do not contact"};
+  async function save(){
+    if(!current || !outcome || !mcp || busy) return;
+    const l = current, o = outcome, date = $("f-date").value || todayIso;
+    const contact = $("f-contact").value.trim(), email = $("f-email").value.trim(), note = $("f-note").value.trim();
+    const fields = {};
+    let line = "[" + pretty(todayIso) + " call] " + LABEL[o];
+    if(contact) line += ". Spoke to " + contact;
+    if(note) line += ". " + note;
+    if(o === "interested") line += ". ACTION: email rates + insurance certificate" + (email || l.email ? " to " + (email || l.email) : "");
+    if(o === "callback") line += ". Call back " + pretty(date);
+    fields[F.notes] = (l.notes ? l.notes + "\n" : "") + line;
+    fields[F.next] = date;
+    if(contact) fields[F.contact] = contact;
+    if(email) fields[F.email] = email;
+    const cold = !l.stage || l.stage === "New Prospect";
+    if(o === "noanswer" || o === "voicemail"){ if(cold) fields[F.stage] = "Contact Scheduled"; }
+    if(o === "callback"){ if(!["Interested","Quote Sent"].includes(l.stage)) fields[F.stage] = "Contact Scheduled"; }
+    if(o === "interested"){ fields[F.stage] = "Interested"; }
+    if(o === "quote"){ fields[F.stage] = "Quote Sent"; }
+    if(o === "notnow"){ fields[F.stage] = "Lost"; }
+    if(o === "dnc"){ fields[F.stage] = "Do Not Contact"; fields[F.status] = "Do Not Contact"; fields[F.outreach] = "Opted Out"; }
+    busy = true; $("save").disabled = true; $("card").classList.add("loading");
+    $("status").className = "status"; $("status").textContent = "Saving to Airtable…";
+    try{
+      await mcp.callTool("Airtable","update_records_for_table",{ baseId: BASE, tableId: TABLE, records: [{ id: l.id, fields }] });
+      bump(o);
+      Object.assign(l, { notes: fields[F.notes], next: date, contact: contact || l.contact, email: email || l.email,
+        stage: fields[F.stage] || l.stage, status: fields[F.status] || l.status, outreach: fields[F.outreach] || l.outreach });
+      const q = queues[tab]; const i = q.indexOf(l);
+      build();
+      const nq = queues[tab]; const nxt = nq.find((x, k) => k >= Math.max(0, i) && x.id !== l.id) || nq.find(x => x.id !== l.id) || null;
+      show(nxt);
+      $("status").className = "status ok"; $("status").textContent = "Saved: " + l.name + " · " + LABEL[o] + ".";
+    }catch(e){
+      $("status").className = "status err";
+      $("status").textContent = (e && (e.code === "server_unavailable" || e.code === "upstream_error"))
+        ? "Airtable didn't confirm the save. Press Refresh list to check the record before saving again."
+        : errText(e);
+      $("save").disabled = false;
+    }finally{ busy = false; $("card").classList.remove("loading"); }
+  }
+
+  // ---------- wiring ----------
+  document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
+    tab = b.dataset.q;
+    document.querySelectorAll(".tabs button").forEach(x => x.setAttribute("aria-selected", x === b ? "true" : "false"));
+    renderList(); show(queues[tab][0] || null);
+  });
+  document.querySelectorAll(".outcomes button").forEach(b => b.onclick = () => setOutcome(b.dataset.o));
+  $("save").onclick = save;
+  $("skip").onclick = () => { const q = queues[tab]; const i = current ? q.indexOf(current) : -1; show(q[i+1] || q[0] || null); };
+  $("refresh").onclick = load;
+  $("copy").onclick = async () => {
+    const t = $("c-phone").textContent;
+    try{ await navigator.clipboard.writeText(t); $("copy").textContent = "Copied"; setTimeout(() => $("copy").textContent = "Copy", 1400); }
+    catch(e){ const r = document.createRange(); r.selectNodeContents($("c-phone")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+  };
+
+  (async () => {
+    try{ mcp = window.claude && await window.claude.use("mcp"); }catch(e){ mcp = null; }
+    if(!mcp){
+      $("list").innerHTML = '<div class="empty">Open this page in claude.ai to load your Airtable leads.</div>';
+      banner("warn","Live Airtable access isn't available in this view. The card shows an example lead.");
+      return;
+    }
+    load();
+  })();
+})();
+</script>
