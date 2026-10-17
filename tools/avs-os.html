@@ -1,0 +1,452 @@
+<title>AVS OS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: phone-first headquarters. Needs-you list (with one-tap done) → Stage 1 scorecard → bookings & jobs (one-tap status, create job card + cleaner offer, mark paid) → cleaners (call times for applicants, one-tap vetting checks) → sales pipeline → email outreach → money → quality → inbox → roadmap → systems → sync log. Dark-only, sister app to Money OS with a champagne accent. */
+:root{
+  color-scheme: dark;
+  --bg:#070b19; --bg2:#0b1229; --card:#0f1834; --line:#1c2a52; --line2:#26386b;
+  --fg:#eef2ff; --muted:#8e9bc4; --dim:#5d6a94;
+  --accent:#3d7bff; --accent2:#7fa8ff; --accentbg:rgba(61,123,255,.14);
+  --gold:#e6c27a; --goldbg:rgba(230,194,122,.12);
+  --good:#38d39f; --goodbg:rgba(56,211,159,.13); --warn:#ffb547; --warnbg:rgba(255,181,71,.13); --bad:#ff6b7d; --badbg:rgba(255,107,125,.13);
+  --display:"Outfit","Avenir Next",system-ui,sans-serif;
+  --body:"DM Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --r:14px;
+}
+*{box-sizing:border-box}
+html,body{background:var(--bg);color:var(--fg)}
+html{scroll-behavior:smooth;scroll-padding-top:64px}
+body{font-family:var(--body);font-size:15px;line-height:1.45;margin:0;background:radial-gradient(900px 500px at 50% -140px,#3a3018 0%,var(--bg) 70%) no-repeat,var(--bg)}
+.wrap{max-width:820px;margin:0 auto;padding-inline:16px;padding-block:18px 64px;display:flex;flex-direction:column;gap:26px}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+button{font:inherit;color:inherit;cursor:pointer}
+button:disabled{opacity:.5;cursor:default}
+a{color:var(--accent2)}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-weight:600}
+.brand h1{font-size:24px}
+.nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;margin-inline:-16px;padding:10px 16px;background:rgba(7,11,25,.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line);display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav a{flex:none;color:var(--muted);text-decoration:none;font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;border:1px solid var(--line)}
+.btn{background:var(--card);border:1px solid var(--line2);border-radius:999px;padding:8px 14px;font-size:13px;font-weight:600;text-decoration:none;color:var(--fg);display:inline-block}
+.btn:hover{border-color:var(--gold)}
+.btn.sm{padding:5px 10px;font-size:12px}
+.btn.gold{background:var(--gold);border-color:var(--gold);color:#2a1f05}
+.btn.ghost{background:transparent}
+.label{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.sub{color:var(--muted);font-size:13.5px}
+.note{font-size:12.5px;color:var(--muted);margin:0}
+.pill{display:inline-flex;align-items:center;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:600;white-space:nowrap}
+.pill.good{background:var(--goodbg);color:var(--good)}.pill.warn{background:var(--warnbg);color:var(--warn)}.pill.bad{background:var(--badbg);color:var(--bad)}.pill.gold{background:var(--goldbg);color:var(--gold)}.pill.info{background:var(--accentbg);color:var(--accent2)}.pill.mute{background:rgba(255,255,255,.06);color:var(--muted)}
+section{display:flex;flex-direction:column;gap:12px}
+.sec-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px 12px;flex-wrap:wrap}
+.sec-head h2{font-size:20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.card h3{font-size:16px}
+.list{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.item{display:grid;grid-template-columns:auto 1fr auto;gap:12px;padding:12px 14px;border-top:1px solid var(--line);align-items:start}
+.item:first-child{border-top:none}
+.item.nt{grid-template-columns:1fr auto}
+.item .m{min-width:0;display:flex;flex-direction:column;gap:3px}
+.item .m b{font-weight:600;overflow-wrap:anywhere}
+.item .m span{font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.item .r{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.dot{width:10px;height:10px;border-radius:50%;margin-top:6px}
+.empty{padding:16px;color:var(--muted);font-size:13.5px}
+.hero{background:linear-gradient(160deg,#3a2f14 0%,#121a3a 62%);border:1px solid #5a4a22;border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:14px}
+.big{font-family:var(--mono);font-size:40px;font-weight:600;line-height:1.05}
+.bar{height:10px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}
+.bar span{display:block;height:100%;border-radius:999px;background:var(--gold)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
+.tile{background:rgba(0,0,0,.22);border:1px solid var(--line);border-radius:12px;padding:11px 12px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.tile b{font-family:var(--mono);font-size:19px;font-weight:600;overflow-wrap:anywhere}
+.tile span{font-size:11.5px;color:var(--muted)}
+.funnel{display:flex;flex-direction:column;gap:7px}
+.frow{display:grid;grid-template-columns:150px 1fr 40px;gap:10px;align-items:center;font-size:13px}
+.frow .fb{height:10px;border-radius:999px;background:rgba(255,255,255,.06);overflow:hidden}
+.frow .fb span{display:block;height:100%;border-radius:999px}
+.frow .n{text-align:right;font-family:var(--mono)}
+.scripts{display:flex;flex-direction:column}
+.srow{display:grid;grid-template-columns:1fr repeat(3,56px);gap:8px;padding:10px 0;border-top:1px solid var(--line);align-items:center;font-size:13px}
+.srow:first-child{border-top:none}
+.srow.h{color:var(--muted);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase}
+.srow .n{text-align:right;font-family:var(--mono)}
+.srow .nm{min-width:0;overflow-wrap:anywhere}
+.road{display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.stage{display:grid;grid-template-columns:30px 1fr auto;gap:12px;padding:12px 14px;border-top:1px solid var(--line);align-items:center}
+.stage:first-child{border-top:none}
+.stage .no{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:13px;background:rgba(255,255,255,.06);color:var(--muted)}
+.stage.done .no{background:var(--gold);color:#2a1f05}
+.stage.now{background:var(--goldbg)}
+.stage .t{font-weight:600}
+.stage.done .t{color:var(--muted)}
+.stage .r{font-family:var(--mono);font-size:12.5px;color:var(--muted);text-align:right}
+.check{display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.li{display:grid;grid-template-columns:auto 1fr;gap:12px;padding:11px 14px;border-top:1px solid var(--line);align-items:start}
+.li:first-child{border-top:none}
+.li .tx{min-width:0;display:flex;flex-direction:column;gap:2px}
+.li .tx span{font-size:12.5px;color:var(--muted)}
+.li.done .tx b{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--dim)}
+.tick{width:26px;height:26px;border-radius:8px;border:1.5px solid var(--line2);background:transparent;display:grid;place-items:center;padding:0}
+.tick svg{width:15px;height:15px;opacity:0}
+.li.done .tick{background:var(--gold);border-color:var(--gold)}
+.li.done .tick svg{opacity:1}
+.chk{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line2);background:transparent;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:600;color:var(--muted)}
+.chk.on{background:var(--goodbg);border-color:var(--good);color:var(--good)}
+.slots{display:flex;flex-wrap:wrap;gap:6px}
+.slot{display:inline-flex;align-items:center;gap:6px;background:var(--bg2);border:1px solid var(--line2);border-radius:999px;padding:5px 10px;font-size:12.5px}
+.slot button{background:none;border:none;color:var(--dim);padding:0;font-size:12px}
+.inrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+input,select,textarea{background:var(--bg2);border:1px solid var(--line2);border-radius:10px;color:var(--fg);padding:9px 11px;font:inherit;min-width:0}
+.log{font-size:12.5px;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+.foot{color:var(--dim);font-size:12px;text-align:center}
+.loading{color:var(--muted);text-align:center;padding:40px 0}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--card);border:1px solid var(--line2);border-radius:999px;padding:8px 16px;font-size:13px;z-index:20;max-width:calc(100vw - 32px)}
+dialog{border:1px solid var(--line2);background:var(--bg2);color:var(--fg);border-radius:18px;padding:0;width:min(520px,calc(100vw - 24px));max-height:calc(100vh - 40px)}
+dialog::backdrop{background:rgba(3,6,16,.7)}
+.sheet{display:flex;flex-direction:column;gap:12px;padding:20px}
+.sheet h3{font-size:18px}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field label{font-size:12.5px;color:var(--muted);font-weight:600}
+.field input,.field select,.field textarea{width:100%}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sheet .actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.offer{white-space:pre-wrap;background:var(--card);border:1px solid var(--line2);border-radius:12px;padding:12px;font-size:13.5px;max-height:260px;overflow:auto}
+@media (max-width:440px){.big{font-size:32px}.frow{grid-template-columns:118px 1fr 34px}.srow{grid-template-columns:1fr repeat(3,46px)}.two{grid-template-columns:1fr}}
+</style>
+
+<div class="wrap">
+  <div class="top">
+    <div class="brand"><span class="eyebrow">AVS Cleaning · Headquarters</span><h1>AVS OS</h1></div>
+    <span class="sub" id="upd"></span>
+  </div>
+  <nav class="nav" aria-label="Sections"><a href="#needs">Needs you</a><a href="#score">Stage 1</a><a href="#jobs">Bookings & jobs</a><a href="#cleaners">Cleaners</a><a href="#pipeline">Sales</a><a href="#outreach">Outreach</a><a href="#money">Money</a><a href="#quality">Quality</a><a href="#road">Roadmap</a><a href="#systems">Systems</a></nav>
+  <div class="loading" id="loading">Loading AVS OS…</div>
+  <div id="content" hidden style="display:flex;flex-direction:column;gap:28px"></div>
+  <p class="foot">Private to you. Airtable is the record. Your inbox is checked every hour, Airtable is refreshed at about 6am and 6pm, applicants are reconciled at about 10pm, and email outreach runs on weekday mornings. Buttons marked with Airtable actions update it straight away.</p>
+</div>
+<dialog id="sheet"><form class="sheet" id="form" method="dialog"></form></dialog>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function(){
+const SNAP="avs/snapshot",META="avs/meta",SCRIPTS="outreach/scripts",LEADS="leads";
+const TRACKER="https://claude.ai/artifact/KeVkbjC5z52KAXCaVheGVg";
+const CUST={base:"appge0DudNjJ2Yg19",table:"tbl9yc1i8NKUsvpNv",stage:"fldilQaxUAPvtRZ5H",out:"fldcuFb7peaNyqq11",last:"fldUAMEupcHwfFbgm",next:"fldDmq4w0QQty58r6"};
+const BOOK={base:"appge0DudNjJ2Yg19",table:"tblrMxl8uklfLndy6",status:"fldLfD7HVKnRk7XTA",quoteSent:"fldyvnvjKQuOfIeWT",accepted:"fldOWrVCi4aXQyadp",pay:"fldzSm3cozQndrd9Q"};
+const JOB={base:"app7Jbexdn61FOFcG",table:"tblAvIgI4rwQp0xH6",name:"fld4Zzq6mI5iRcZ5v",date:"fldpIx0D59wHScu8e",customer:"fldZcfTs5osHoZ5ys",property:"fld0lB4KB6Yd4V6Yi",cleaner:"flds44XVkRwtg4APl",status:"fldOqjeNwvjqqROcR",price:"fld6W6W6ccgLMKxYC",pay:"fldcUM6jJ8kQsX9wX",notes:"fldlh9AkikFZYckGW",cEmail:"fldY01TLr9G7qlFMO",cPhone:"fldACSHTF91QePVnd",accept:"fld0YBvvPOUIuCVaM",offered:"fldwlKTSjGQqTkXTq",dispatch:"fldM11NrkjnBTY7Qz",payStatus:"fldhWyf46zMtBQQ0F",paidDate:"flddQEKlN3GeTb0Tl",payRef:"fldotHs6bI0E6bc8L",qc:"fldEDPwgAn6dUhOOm",auth:"fldKfvORa09cTcl8Y",ref:"fldAZkHb9okgu3KBt"};
+const CLN={base:"app9STIGnImDe8czh",table:"tblfJOLGnZuB6GakP",status:"fldz2dfrFBf6KzmJR",expiry:"fld5TgzqHR5SZZ656"};
+const CHECKS=[["rtw","Right to work","fldFsb9fLj0BGfcmW",/right to work/i],["refs","References","fldEC9eYRl8N4PTDQ",/reference/i],["ins","Insurance","fldO3GKct3q6DypPP",/^insurance$|insurance(?! expiry| expired)/i],["onb","Onboarding","fldWDrOPEQiZ8u2MW",/onboarding/i],["avail","Availability","fldKcrS5CWt0zYNNg",/availability/i],["equip","Equipment","fldN9XpOHMDSv2N5T",/equipment/i],["trial","Trial clean","fldGaIKTl2e0I164e",/trial/i]];
+let db=null,mcp=null,S=null,M=null,L=[],SC=null,snapRef=null,metaRef=null,busy={},hold=0;
+const $=s=>document.querySelector(s),content=$("#content");
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const gbp=(n,dp)=>{n=Number(n)||0;const d=dp??(Math.abs(Math.round(n*100))%100===0?0:2);return(n<0?"-£":"£")+Math.abs(n).toLocaleString("en-GB",{minimumFractionDigits:d,maximumFractionDigits:d})};
+const ymd=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],DOW=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const parseD=s=>{const m=String(s||"").match(/^(\d{4})-(\d{2})-(\d{2})/);return m?new Date(+m[1],+m[2]-1,+m[3]):null};
+const shortD=s=>{const d=parseD(s);return d?`${DOW[d.getDay()]} ${d.getDate()} ${MON[d.getMonth()]}`:""};
+const addD=(n)=>{const d=new Date();d.setDate(d.getDate()+n);return ymd(d)};
+const today=()=>ymd(new Date());
+const pct=(a,b)=>b?Math.round(a/b*100)+"%":"—";
+const atUrl=(b,t,r)=>`https://airtable.com/${b}/${t}${r?"/"+r:""}`;
+const recOf=x=>x&&(x.id&&/^rec/.test(x.id)?x.id:(String(x.url||"").match(/\/(rec[A-Za-z0-9]{14})/)||[])[1])||null;
+function toast(t){const el=$("#toast");el.textContent=t;el.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>el.hidden=true,2800)}
+const KIND={overdue:["bad","Overdue"],followup:["warn","Follow up"],enquiry:["gold","New enquiry"],payment:["warn","Payment"],cleaner:["bad","Needs a cleaner"],qc:["info","Check photos"],pay:["warn","Pay cleaner"],reply:["good","Reply"],recruit:["info","Recruitment"],other:["mute","Note"]};
+const LSTAT=[["new","Found, not emailed","var(--dim)"],["emailed","Emailed","var(--accent2)"],["followed_up","Followed up","var(--accent)"],["replied","Replied","var(--warn)"],["interested","Interested","var(--gold)"],["call_booked","Call booked","var(--gold)"],["handed_over","Quoted by you","var(--good)"],["client","Client","var(--good)"],["not_interested","Not interested","var(--line2)"],["opted_out","Opted out","var(--line2)"],["bounced","Bounced","var(--line2)"]];
+const ERR={needs_reauth:"Reconnect Airtable in claude.ai Settings → Connectors.",server_not_connected:"Add the Airtable connector in claude.ai Settings → Connectors.",not_in_manifest:"Airtable isn't allowed for this page. Turn it on in the page's Permissions menu.",approval_required:"Airtable needs your approval. Tap again and choose Allow.",selection_required:"Choose which Airtable connection to use when Claude asks, then tap again."};
+const errMsg=e=>ERR[e&&e.code]||(e&&e.code==="tool_error"?"Airtable refused the change: "+((e&&e.message)||""):"Couldn't reach Airtable. Nothing was changed. Try again shortly.");
+
+/* ---------- writes ---------- */
+async function at(tool,base,table,records,extra){
+  if(!mcp)throw{code:"no_mcp"};
+  const r=await mcp.callTool("Airtable",tool,Object.assign({baseId:base,tableId:table,records},extra||{}),{cache:false});
+  return r.payload;
+}
+function saveSnap(){if(snapRef&&S){hold++;snapRef.set(JSON.parse(JSON.stringify(S))).catch(()=>{}).finally(()=>{hold=Math.max(0,hold-1)})}}
+function saveMeta(msg){if(metaRef&&M){hold++;metaRef.set(JSON.parse(JSON.stringify(M))).then(()=>{if(msg)toast(msg)}).catch(()=>toast("Couldn't save. Try again.")).finally(()=>{hold=Math.max(0,hold-1)})}}
+async function run(key,label,fn){
+  if(!mcp){toast("Airtable updates need this page opened in Claude with Airtable allowed.");return}
+  busy[key]="Saving…";render();
+  try{await fn();delete busy[key];render();toast(label);saveSnap()}
+  catch(e){delete busy[key];render();toast(errMsg(e))}
+}
+
+/* ---------- outreach ---------- */
+function outreachHTML(){
+  const t=today(),wk=(()=>{const d=new Date();d.setDate(d.getDate()-((d.getDay()+6)%7));return ymd(d)})();
+  const sentToday=L.filter(l=>l.lastEmailed===t).length,firstWeek=L.filter(l=>l.firstEmailed&&l.firstEmailed>=wk).length;
+  const emailed=L.filter(l=>l.firstEmailed).length,replied=L.filter(l=>["replied","interested","call_booked","handed_over","client","not_interested","opted_out"].includes(l.status)).length;
+  const hot=L.filter(l=>l.status==="interested"||l.status==="call_booked").sort((a,b)=>(b.lastEmailed||"")<(a.lastEmailed||"")?-1:1);
+  const cnt={};L.forEach(l=>{cnt[l.status||"new"]=(cnt[l.status||"new"]||0)+1});
+  const rows=LSTAT.filter(s=>cnt[s[0]]),mx=Math.max(1,...rows.map(s=>cnt[s[0]]));
+  let h=`<section id="outreach"><div class="sec-head"><h2>Email outreach</h2><span class="sub">${L.length} lead${L.length===1?"":"s"} found</span></div>`;
+  h+=`<div class="tiles"><div class="tile"><span>Emailed today</span><b>${sentToday}</b></div><div class="tile"><span>New this week</span><b>${firstWeek}</b></div><div class="tile"><span>Reply rate</span><b>${pct(replied,emailed)}</b></div><div class="tile" style="border-color:var(--gold)"><span>Ready for your quote</span><b style="color:var(--gold)">${hot.length}</b></div></div>`;
+  h+=`<h3 style="font-size:16px">Interested: quote these</h3><div class="list">${hot.length?hot.map(l=>`<div class="item nt"><div class="m"><b>${esc(l.name)}</b><span>${[l.type,l.area].filter(Boolean).map(esc).join(" · ")}</span>${l.email?`<span class="num" style="color:var(--fg)">${esc(l.email)}</span>`:""}${l.phone?`<span class="num" style="color:var(--fg)">${esc(l.phone)}</span>`:""}${l.notes?`<span>${esc(l.notes)}</span>`:""}<div class="acts">${l.email?`<button class="btn sm" type="button" data-act="copy" data-v="${esc(l.email)}">Copy email</button>`:""}${l.phone?`<button class="btn sm" type="button" data-act="copy" data-v="${esc(l.phone)}">Copy number</button>`:""}</div></div><span class="pill gold">${l.status==="call_booked"?"Call booked":"Interested"}</span></div>`).join(""):`<div class="empty">No one waiting on a quote yet. Interested replies land here the morning they come in.</div>`}</div>`;
+  if(rows.length)h+=`<div class="card"><div class="label">Where every lead is</div><div class="funnel">${rows.map(s=>`<div class="frow"><span>${s[1]}</span><span class="fb"><span style="width:${cnt[s[0]]/mx*100}%;background:${s[2]}"></span></span><span class="n">${cnt[s[0]]}</span></div>`).join("")}</div></div>`;
+  const act=(SC&&SC.active)||[];
+  h+=`<div class="card"><div class="label">Script test</div>${act.length?`<div class="scripts"><div class="srow h"><span>Script</span><span class="n">Sent</span><span class="n">Reply</span><span class="n">Interest</span></div>${act.map(s=>`<div class="srow"><span class="nm"><b>${esc(s.id)}</b> ${esc(s.name||"")}${s.subject?`<br><span class="sub" style="font-size:12px">${esc(s.subject)}</span>`:""}</span><span class="n">${+s.sent||0}</span><span class="n">${pct(+s.replies||0,+s.sent||0)}</span><span class="n">${pct(+s.interested||0,+s.sent||0)}</span></div>`).join("")}</div>`:`<p class="note">The three test scripts appear after the first outreach run.</p>`}<p class="note">Each Monday, once every script has 60 sends, the weakest is replaced with a new variant.${(SC&&SC.retired&&SC.retired.length)?` Retired so far: ${SC.retired.length}.`:""}</p></div>`;
+  return h+`</section>`;
+}
+
+/* ---------- render ---------- */
+function render(){
+  if(!S){content.innerHTML=`<div class="card"><h3>Waiting for the first sync</h3><p class="note">The hourly sync fills this page from Airtable and your AVS inbox.</p></div>`+(L.length||SC?outreachHTML():"");show();return}
+  const t=today();let h="";
+  /* NEEDS YOU */
+  const fu=(S.pipeline&&S.pipeline.followUps)||[];
+  const overdue=fu.filter(x=>x.due&&x.due<t),dueToday=fu.filter(x=>x.due===t);
+  const needs=(S.needs||[]),pend=(S.pending||[]);
+  const nCount=needs.length+(overdue.length?1:0)+(dueToday.length?1:0);
+  h+=`<section id="needs"><div class="sec-head"><h2>Needs you</h2><span class="sub">${nCount} item${nCount===1?"":"s"} · <a href="https://mail.google.com/mail/u/0/#drafts" target="_blank" rel="noopener">Open Gmail drafts</a></span></div><div class="list">`;
+  if(!nCount)h+=`<div class="empty">Nothing urgent. Use the time for sales: open the <a href="${TRACKER}" target="_blank" rel="noopener">Prospect Tracker</a> and make calls.</div>`;
+  if(overdue.length)h+=`<div class="item nt"><div class="m"><b>${overdue.length} follow-up${overdue.length===1?"":"s"} overdue</b><span>${overdue.slice(0,4).map(x=>esc(x.name)).join(", ")}${overdue.length>4?"…":""}</span></div><a class="pill bad" href="#pipeline" style="text-decoration:none">Go</a></div>`;
+  if(dueToday.length)h+=`<div class="item nt"><div class="m"><b>${dueToday.length} follow-up${dueToday.length===1?"":"s"} due today</b><span>${dueToday.slice(0,4).map(x=>esc(x.name)).join(", ")}</span></div><a class="pill warn" href="#pipeline" style="text-decoration:none">Go</a></div>`;
+  needs.forEach((n,i)=>{const k=KIND[n.kind]||KIND.other;const isQuote=/^Send quote/i.test(n.text||"");
+    h+=`<div class="item nt"><div class="m"><b>${esc(n.text)}</b>${n.sub?`<span>${esc(n.sub)}</span>`:""}<div class="acts">${isQuote?`<a class="btn sm gold" href="https://mail.google.com/mail/u/0/#drafts" target="_blank" rel="noopener">Open draft</a>`:""}${n.url?`<a class="btn sm" href="${esc(n.url)}" target="_blank" rel="noopener">Open in Airtable</a>`:""}${n.kind==="recruit"?`<a class="btn sm" href="#calltimes">Set call times</a>`:""}<button class="btn sm ghost" type="button" data-act="done" data-i="${i}">Done</button></div></div><span class="pill ${k[0]}">${k[1]}</span></div>`});
+  h+=`</div>${pend.length?`<p class="note">${pend.length} change${pend.length===1?"":"s"} from the hourly checks queued for Airtable (${pend.slice(0,3).map(p=>esc(p.what||p.table||"")).join("; ")}${pend.length>3?"…":""}). They're written at the 6am or 6pm sync.</p>`:""}</section>`;
+
+  /* SCORECARD */
+  const st=S.stage||{},target=+st.target||15000,rev=+st.revenueMonth||0,pctv=Math.min(100,rev/target*100),wk=S.week||{};
+  h+=`<div class="hero" id="score"><div class="label" style="color:var(--gold)">Stage 1 · this month</div>
+   <div><span class="big">${gbp(rev)}</span> <span class="sub num">of ${gbp(target)} a month</span></div>
+   <div class="bar"><span style="width:${pctv.toFixed(1)}%"></span></div>
+   <div class="tiles">
+    <div class="tile"><span>Jobs this month</span><b>${st.jobsMonth||0}</b></div>
+    <div class="tile"><span>Average job</span><b>${st.avgJob?gbp(st.avgJob):"—"}</b></div>
+    <div class="tile"><span>Margin after cleaner pay</span><b>${st.margin!=null?Math.round(st.margin*100)+"%":"—"}</b></div>
+    <div class="tile"><span>Recurring clients</span><b>${st.recurringClients||0}<span class="sub"> / ${st.activeClients||0} active</span></b></div>
+    <div class="tile"><span>New contacts this week</span><b>${wk.contactsMade||0}<span class="sub"> / ${wk.contactsGoal||50}</span></b><div class="bar" style="height:5px"><span style="width:${Math.min(100,(wk.contactsMade||0)/(wk.contactsGoal||50)*100)}%"></span></div></div>
+   </div></div>`;
+
+  /* BOOKINGS & JOBS */
+  const B=S.bookings||[],J=S.jobs||[];
+  h+=`<section id="jobs"><div class="sec-head"><h2>Bookings & jobs</h2><span class="sub">${B.length} open request${B.length===1?"":"s"} · ${J.length} job${J.length===1?"":"s"}</span></div>
+   <div class="list">${B.length?B.map((b,i)=>bookingRow(b,i)).join(""):`<div class="empty">No open booking requests. Bookings from the <a href="https://tally.so/r/rjNdDM" target="_blank" rel="noopener">booking form</a> and your inbox land here with the quote already drafted.</div>`}</div>
+   <div class="list">${J.length?J.map((j,i)=>jobRow(j,i)).join(""):`<div class="empty">No upcoming jobs yet. When a booking is paid, tap "Create job" on it.</div>`}</div>
+   <button class="btn" type="button" data-act="newjob" style="align-self:flex-start">+ Create a job card</button>
+  </section>`;
+
+  /* CLEANERS */
+  const C=S.cleaners||{},ap=C.applicants||{},apMax=Math.max(1,...Object.values(ap),1);
+  const slots=((M&&M.freeTimes)||[]).filter(s=>s.at>=new Date().toISOString().slice(0,16)).sort((a,b)=>a.at<b.at?-1:1);
+  h+=`<section id="cleaners"><div class="sec-head"><h2>Cleaner network</h2><span class="sub">${(C.ready||[]).length} ready for jobs</span></div>
+   <div class="list">${(C.ready||[]).map(c=>`<div class="item nt"><div class="m"><b>${esc(c.name)}</b><span>${esc(c.area||"")}${c.availability?" · "+esc(c.availability):""}</span>${c.phone?`<span class="num" style="color:var(--fg)">${esc(c.phone)}</span>`:""}</div><span class="pill good">Ready</span></div>`).join("")}${(C.pending||[]).map((c,i)=>pendingRow(c,i)).join("")}${!(C.ready||[]).length&&!(C.pending||[]).length?`<div class="empty">No approved cleaners yet.</div>`:""}</div>
+   <div class="card" id="calltimes"><div class="label">Your free times for applicant calls</div>
+    <p class="note">Add slots when you're free. The hourly sync offers them to vetted applicants, books the one they pick, and puts the call in Needs you. It never shares your number.</p>
+    <div class="slots">${slots.length?slots.map(s=>`<span class="slot">${esc(fmtSlot(s.at))}<button type="button" data-act="delslot" data-at="${esc(s.at)}" aria-label="Remove">✕</button></span>`).join(""):`<span class="note">No free times yet, so vetted applicants are waiting.</span>`}</div>
+    <form class="inrow" id="slotform"><input id="sl_d" name="sl_d" type="date" required aria-label="Date" value="${addD(1)}"><input id="sl_t" name="sl_t" type="time" required aria-label="Time" value="18:00" step="900"><button class="btn gold" type="submit">Add slot</button></form></div>
+   <div class="card"><div class="label">Applicants</div><div class="funnel">${Object.entries(ap).map(([k,v])=>`<div class="frow"><span>${esc(k)}</span><span class="fb"><span style="width:${v/apMax*100}%;background:${k==="Rejected"?"var(--line2)":"var(--accent2)"}"></span></span><span class="n">${v}</span></div>`).join("")}</div><p class="note">Screened by email only, with the "Clean with AVS" form. Rule: no own public liability insurance, no jobs.</p></div>
+  </section>`;
+
+  /* PIPELINE */
+  const P=S.pipeline||{},counts=P.counts||{},maxC=Math.max(1,...Object.values(counts),1);
+  const colors={"Lead (not yet contacted)":"var(--dim)","New Prospect":"var(--accent2)","Contact Scheduled":"var(--accent)","Contacted":"var(--warn)","Interested":"var(--gold)","Quote Sent":"var(--gold)","Won":"var(--good)","Not a fit":"var(--line2)","Lost":"var(--line2)"};
+  h+=`<section id="pipeline"><div class="sec-head"><h2>Sales pipeline</h2><a class="sub" href="${atUrl(CUST.base,CUST.table)}" target="_blank" rel="noopener">Open in Airtable</a></div>
+   <div class="card"><div class="funnel">${Object.entries(counts).map(([k,v])=>`<div class="frow"><span>${esc(k)}</span><span class="fb"><span style="width:${v/maxC*100}%;background:${colors[k]||"var(--accent2)"}"></span></span><span class="n">${v}</span></div>`).join("")}</div></div>
+   <h3 style="font-size:16px">Follow-ups</h3><div class="list">${fu.length?fu.slice().sort((a,b)=>(a.due||"9")<(b.due||"9")?-1:1).map(x=>prospectRow(x,true)).join(""):`<div class="empty">No follow-ups scheduled.</div>`}</div>
+   <h3 style="font-size:16px">Next to contact</h3><div class="list">${(P.next||[]).length?P.next.map(x=>prospectRow(x,false)).join(""):`<div class="empty">Everyone has been contacted. Add new prospects in Airtable.</div>`}</div>
+   ${(S.phoneList&&S.phoneList.next&&S.phoneList.next.length)?`<div class="sec-head"><h3 style="font-size:16px">Phone list</h3><a class="sub" href="${TRACKER}" target="_blank" rel="noopener">Call from the Prospect Tracker →</a></div><div class="list">${S.phoneList.next.map(x=>`<div class="item nt"><div class="m"><b>${esc(x.name)}</b><span>${esc(x.area||"")}${x.kind?" · "+esc(x.kind):""}</span>${x.phone?`<span class="num" style="color:var(--fg)">${esc(x.phone)}</span>`:""}</div><span class="pill mute">${esc(x.status||"New")}</span></div>`).join("")}</div>`:""}
+  </section>`;
+
+  h+=outreachHTML();
+
+  /* MONEY */
+  const $m=S.money||{},profit=+$m.profit||0,taxRate=+(M&&M.taxRate)||0.25;
+  h+=`<section id="money"><div class="sec-head"><h2>Money this month</h2><span class="sub">From Airtable finance and Stripe</span></div><div class="tiles">
+   <div class="tile"><span>Money in</span><b>${gbp($m.monthIn,2)}</b></div><div class="tile"><span>Cleaner pay</span><b>${gbp($m.cleanerPay,2)}</b></div><div class="tile"><span>Expenses</span><b>${gbp($m.expenses,2)}</b></div>
+   <div class="tile"><span>Profit</span><b style="color:${profit<0?"var(--bad)":"var(--good)"}">${gbp(profit,2)}</b></div><div class="tile"><span>Unpaid invoices</span><b>${gbp($m.outstanding,2)}</b></div>
+   <div class="tile" style="border-color:var(--gold)"><span>Tax pot to set aside (${Math.round(taxRate*100)}%)</span><b style="color:var(--gold)">${gbp(Math.max(0,profit*taxRate),2)}</b></div></div>
+   <p class="note">As a sole trader you pay income tax and National Insurance on profit through Self Assessment. Setting aside about a quarter of profit is a common starting rule. Check your own rate with an accountant or GOV.UK.</p>
+   <div class="card"><div class="label">What AVS paid me this month</div><b class="num" style="font-size:22px">${gbp($m.paidToMe,2)}</b><p class="note">This feeds your income streams in Wealth OS.</p></div></section>`;
+
+  /* QUALITY */
+  const Q=S.quality||{};
+  h+=`<section id="quality"><div class="sec-head"><h2>Quality</h2></div><div class="tiles"><div class="tile"><span>QC checks</span><b>${Q.checks||0}</b></div><div class="tile"><span>Pass rate</span><b>${Q.passRate!=null?Math.round(Q.passRate*100)+"%":"—"}</b></div><div class="tile"><span>Open issues</span><b>${Q.openIssues||0}</b></div><div class="tile"><span>Complaints this month</span><b>${Q.complaints||0}</b></div></div></section>`;
+
+  /* INBOX */
+  const I=S.inbox||{};
+  if((I.notes||[]).length||(I.drafts||[]).length)h+=`<section><div class="sec-head"><h2>From your inbox</h2><span class="sub">What was sent, and drafts waiting in Gmail</span></div><div class="list">${(I.drafts||[]).map(d=>{const sent=/^Sent:/i.test(d.why||"");return `<div class="item nt"><div class="m"><b>${sent?"To":"Draft to"} ${esc(d.to)}</b><span>${esc(d.why||d.subject||"")}</span></div><span class="pill ${sent?"good":"info"}">${sent?"Sent":"Draft"}</span></div>`}).join("")}${(I.notes||[]).map(n=>`<div class="item nt"><div class="m"><b>${esc(n)}</b></div><span class="pill mute">Note</span></div>`).join("")}</div></section>`;
+
+  /* ROADMAP */
+  const won=(counts["Won"]||0),ready=(C.ready||[]).length,best=Math.max(rev,+(st.bestMonth||0));
+  const R=[["First paying client",won>0||rev>0],["First recurring client",(st.recurringClients||0)>0],["5 cleaners ready for jobs",ready>=5],["First £1,000 month",best>=1000],["£5,000 month",best>=5000],["£10,000 month",best>=10000],["£15,000 month: Stage 1 proven",best>=15000]];
+  const cur=R.findIndex(x=>!x[1]);
+  h+=`<section id="road"><div class="sec-head"><h2>Stage 1 roadmap</h2><span class="sub">${R.filter(x=>x[1]).length}/${R.length} done</span></div><div class="road">${R.map((x,i)=>`<div class="stage${x[1]?" done":""}${i===cur?" now":""}"><span class="no">${x[1]?"✓":i+1}</span><span class="t">${esc(x[0])}</span><span class="r">${x[1]?"Done":i===cur?"Next":""}</span></div>`).join("")}</div></section>`;
+
+  /* SYSTEMS */
+  const docs=(M&&M.docs)||[];
+  h+=`<section id="systems"><div class="sec-head"><h2>Systems</h2><span class="sub">${docs.filter(d=>d.done).length}/${docs.length} built</span></div><div class="check">${docs.map((d,i)=>`<div class="li${d.done?" done":""}"><button class="tick" type="button" data-act="doc" data-i="${i}" aria-pressed="${!!d.done}" aria-label="Mark built"><svg viewBox="0 0 16 16" fill="none"><path d="M3.5 8.5l3 3 6-7" stroke="#2a1f05" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="tx"><b>${esc(d.t)}</b>${d.d?`<span>${esc(d.d)}</span>`:""}</div></div>`).join("")}</div></section>`;
+
+  if((S.log||[]).length)h+=`<section><div class="sec-head"><h2>Sync log</h2></div><div class="card log">${S.log.slice(-8).reverse().map(l=>`<div><b style="color:var(--fg)">${esc(l.at)}</b> · ${esc(l.mode)} · ${esc(l.summary)}</div>`).join("")}</div></section>`;
+  content.innerHTML=h;show();
+  $("#upd").textContent=S.updated?`Last sync: ${S.updated}`:"";
+}
+function fmtSlot(at){const d=new Date(at);return isNaN(d)?at:`${DOW[d.getDay()]} ${d.getDate()} ${MON[d.getMonth()]}, ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`}
+function bookingRow(b,i){
+  const id=recOf(b),k="b"+i,bz=busy[k],paid=b.payment==="Paid";
+  const acts=bz?`<span class="pill mute">${esc(bz)}</span>`:id?`${!/Quoted|Accepted/.test(b.status||"")&&b.quote?`<button class="btn sm gold" type="button" data-act="bq" data-i="${i}">Quote sent</button>`:""}${!paid?`<button class="btn sm" type="button" data-act="bpaid" data-i="${i}">Paid</button>`:""}<button class="btn sm${paid?" gold":""}" type="button" data-act="newjob" data-i="${i}">Create job</button><button class="btn sm ghost" type="button" data-act="blost" data-i="${i}">Lost</button>`:"";
+  return `<div class="item nt"><div class="m"><b>${esc(b.name)} · ${esc(b.service||"")}</b><span>${[b.received?"Received "+shortD(b.received):"",b.preferred?"Wants "+shortD(b.preferred):"",b.quote?"Quote "+gbp(b.quote):"",b.postcode||""].filter(Boolean).map(esc).join(" · ")}</span><div class="acts">${acts}${b.url?`<a class="btn sm ghost" href="${esc(b.url)}" target="_blank" rel="noopener">Airtable</a>`:""}</div></div><span class="pill ${paid?"good":"warn"}">${esc(b.status||"New")}${b.payment?" · "+esc(b.payment):""}</span></div>`;
+}
+function jobRow(j,i){
+  const id=recOf(j),k="j"+i,bz=busy[k],s=j.status||"",ps=j.payStatus||"";
+  let acts="";
+  if(bz)acts=`<span class="pill mute">${esc(bz)}</span>`;
+  else if(id){
+    if(/Assigned|Unassigned/.test(s))acts+=`<button class="btn sm gold" type="button" data-act="jaccept" data-i="${i}">Cleaner accepted</button>`;
+    if(/Assigned|Confirmed|In Progress/.test(s))acts+=`<button class="btn sm" type="button" data-act="jdone" data-i="${i}">Completed</button>`;
+    if(s==="Completed"&&ps!=="Paid"&&ps!=="Approved")acts+=`<button class="btn sm gold" type="button" data-act="jqc" data-i="${i}">Photos OK: approve pay</button>`;
+    if(ps==="Approved"||j.readyToPay)acts+=`<button class="btn sm gold" type="button" data-act="jpaid" data-i="${i}">Cleaner paid</button>`;
+    if(j.offer)acts+=`<button class="btn sm ghost" type="button" data-act="joffer" data-i="${i}">Copy offer</button>`;
+  }
+  return `<div class="item nt"><div class="m"><b>${shortD(j.date)} · ${esc(j.customer)}</b><span>${[j.ref,j.property,j.cleaner?"Cleaner: "+j.cleaner:"No cleaner yet",j.price?gbp(j.price):"",j.cleanerPay?"Pay "+gbp(j.cleanerPay):"",ps?"Pay: "+ps:""].filter(Boolean).map(esc).join(" · ")}</span><div class="acts">${acts}${j.url?`<a class="btn sm ghost" href="${esc(j.url)}" target="_blank" rel="noopener">Airtable</a>`:""}</div></div><span class="pill ${j.cleaner?"info":"bad"}">${esc(s)}</span></div>`;
+}
+function pendingRow(c,i){
+  const id=recOf(c),k="c"+i,bz=busy[k],miss=String(c.missing||"");
+  const checks=CHECKS.map(([key,label,fld,re])=>{const isMissing=c.checks?!c.checks[key]:re.test(miss.split(/,\s*/).filter(x=>!/expiry|expired/.test(x)).join(","));return {key,label,fld,isMissing}});
+  const needExpiry=/expiry|expired/i.test(miss);
+  let acts="";
+  if(bz)acts=`<span class="pill mute">${esc(bz)}</span>`;
+  else if(id)acts=checks.map(x=>`<button type="button" class="chk${x.isMissing?"":" on"}" data-act="ccheck" data-i="${i}" data-k="${x.key}" ${x.isMissing?"":"disabled"}>${x.isMissing?"":"✓ "}${x.label}</button>`).join("")+(needExpiry?`<button type="button" class="chk" data-act="cexp" data-i="${i}">Set insurance expiry</button>`:"");
+  else acts=`<span class="note">Buttons appear after the next 6am sync.</span>`;
+  return `<div class="item nt"><div class="m"><b>${esc(c.name)}</b><span>Still needed: ${esc(miss)}</span><div class="acts">${acts}</div></div><span class="pill warn">Not ready</span></div>`;
+}
+function prospectRow(x,isFU){
+  const t=today(),over=isFU&&x.due&&x.due<t,b=busy[x.id];
+  return `<div class="item"><span class="dot" style="background:${over?"var(--bad)":isFU?"var(--warn)":"var(--accent2)"}"></span><div class="m"><b>${esc(x.name)}</b><span>${[x.area,x.stage,isFU&&x.due?(over?"Overdue since "+shortD(x.due):"Due "+shortD(x.due)):""].filter(Boolean).map(esc).join(" · ")}</span>${x.email?`<span class="num" style="color:var(--fg)">${esc(x.email)}</span>`:""}
+   <div class="acts">${b?`<span class="pill mute">${esc(b)}</span>`:`<button class="btn sm gold" type="button" data-act="p" data-k="sent" data-id="${x.id}">${isFU?"Followed up":"Emailed today"}</button><button class="btn sm" type="button" data-act="p" data-k="interested" data-id="${x.id}">Interested</button>${isFU?`<button class="btn sm" type="button" data-act="p" data-k="snooze" data-id="${x.id}">+3 days</button>`:""}<button class="btn sm ghost" type="button" data-act="p" data-k="nofit" data-id="${x.id}">Not a fit</button>`}</div></div><a class="pill mute" href="${atUrl(CUST.base,CUST.table,x.id)}" target="_blank" rel="noopener" style="text-decoration:none">Airtable</a></div>`;
+}
+function show(){content.hidden=false;$("#loading").hidden=true}
+
+/* ---------- prospect actions ---------- */
+const ACT={
+  sent:{label:"Saved: contacted",fields:()=>({[CUST.stage]:"Contacted",[CUST.out]:"Sent - Unconfirmed",[CUST.last]:today(),[CUST.next]:addD(5)}),stage:"Contacted",follow:true,count:true},
+  interested:{label:"Saved: interested",fields:()=>({[CUST.stage]:"Interested",[CUST.out]:"Replied",[CUST.next]:addD(2)}),stage:"Interested",follow:true},
+  snooze:{label:"Moved 3 days",fields:()=>({[CUST.next]:addD(3)}),follow:true},
+  nofit:{label:"Marked not a fit",fields:()=>({[CUST.stage]:"Not a fit",[CUST.next]:null}),stage:"Not a fit",follow:false}
+};
+function prospectAction(id,k){
+  const a=ACT[k];if(!a)return;const f=a.fields();
+  run(id,a.label+" in Airtable",async()=>{
+    await at("update_records_for_table",CUST.base,CUST.table,[{id,fields:f}]);
+    const P=S.pipeline;let item=P.followUps.find(x=>x.id===id)||P.next.find(x=>x.id===id);const from=item&&item.stage;
+    P.followUps=P.followUps.filter(x=>x.id!==id);P.next=P.next.filter(x=>x.id!==id);
+    if(item&&a.follow){item=Object.assign({},item,{stage:a.stage||item.stage,due:f[CUST.next]});P.followUps.push(item)}
+    if(a.stage&&from&&P.counts){if(P.counts[from])P.counts[from]--;P.counts[a.stage]=(P.counts[a.stage]||0)+1}
+    if(a.count){S.week=S.week||{};S.week.contactsMade=(S.week.contactsMade||0)+1}
+  });
+}
+
+/* ---------- sheets ---------- */
+const dlg=$("#sheet"),form=$("#form");
+function field(id,label,val,type="text",extra=""){return `<div class="field"><label for="${id}">${label}</label><input id="${id}" name="${id}" type="${type}" value="${esc(val??"")}" ${extra}></div>`}
+function openSheet(html,submitLabel,onSave){
+  form.innerHTML=html+`<div class="actions"><button class="btn ghost" type="button" id="f_cancel">Cancel</button><button class="btn gold" type="submit" id="f_ok">${submitLabel}</button></div>`;
+  form.onsubmit=async ev=>{ev.preventDefault();const fd=Object.fromEntries(new FormData(form));$("#f_ok").disabled=true;try{await onSave(fd)}catch(e){toast(errMsg(e));$("#f_ok").disabled=false}};
+  $("#f_cancel").onclick=()=>dlg.close();dlg.showModal();
+}
+function offerText(o){
+  return `New AVS job: ${o.ref||"(ref to follow)"}
+Date: ${shortD(o.date)}${o.time?" · arrive "+o.time:""}
+Area: ${o.area||"Birmingham"}
+Clean: ${o.service||"Clean"}
+Your fee: ${gbp(o.pay,2)} (fixed for this job, paid after QC passes)
+
+Before and after photos of every room are required, uploaded through the AVS completion form before you leave.
+Full address and access details are sent once you accept.
+
+Reply YES to accept by ${o.deadline}. If you can't do it, reply NO so I can offer it to someone else.
+
+Alexandre, AVS Cleaning Services`;
+}
+function showOffer(txt){
+  form.innerHTML=`<h3>Send this to your cleaner</h3><p class="note">Copy it into WhatsApp. The job card is saved in Airtable as "Offer Sent".</p><div class="offer" id="offerTxt">${esc(txt)}</div><div class="actions"><button class="btn ghost" type="button" id="f_cancel">Close</button><button class="btn gold" type="button" id="f_copy">Copy offer</button></div>`;
+  $("#f_cancel").onclick=()=>dlg.close();
+  $("#f_copy").onclick=()=>copy(txt,"Offer copied");
+  form.onsubmit=e=>e.preventDefault();if(!dlg.open)dlg.showModal();
+}
+function newJob(b){
+  const ready=(S.cleaners&&S.cleaners.ready)||[];
+  const dl=new Date();dl.setHours(dl.getHours()+3);
+  openSheet(`<h3>${b?"Create job for "+esc(b.name):"New job card"}</h3>
+   ${field("j_c","Customer",b?b.name:"","text","required")}
+   ${field("j_p","Property (address or postcode)",b?(b.address||b.postcode||""):"")}
+   ${field("j_s","Clean type",b?(b.service||""):"End of tenancy")}
+   <div class="two">${field("j_d","Date",b&&b.preferred?b.preferred:addD(2),"date","required")}${field("j_t","Arrive by",b&&b.time?b.time:"09:00","time")}</div>
+   <div class="two">${field("j_price","Price to customer (£)",b&&b.quote?b.quote:"","number",'min="0" step="0.01" inputmode="decimal"')}${field("j_pay","Cleaner pay (£)","","number",'min="0" step="0.01" inputmode="decimal" required')}</div>
+   <div class="field"><label for="j_cl">Cleaner</label><select id="j_cl" name="j_cl"><option value="">Not assigned yet</option>${ready.map((c,i)=>`<option value="${i}">${esc(c.name)}${c.area?" · "+esc(c.area):""}</option>`).join("")}</select>${ready.length?"":`<span class="note">No cleaners are ready yet. Save the job now and assign later.</span>`}</div>
+   <div class="field"><label for="j_n">Notes for the cleaner</label><textarea id="j_n" name="j_n" rows="2">${esc(b&&b.notes||"")}</textarea></div>`,
+   "Save job card",async fd=>{
+     const c=fd.j_cl!==""?ready[+fd.j_cl]:null;
+     const fields={[JOB.name]:`${fd.j_c.trim()} · ${fd.j_s.trim()||"Clean"}`,[JOB.date]:fd.j_d,[JOB.customer]:fd.j_c.trim(),[JOB.property]:fd.j_p.trim(),[JOB.status]:c?"Assigned":"Unassigned",[JOB.qc]:"Not Submitted",[JOB.payStatus]:"Not Due",[JOB.dispatch]:c?"Offer Sent":"Ready to Offer",[JOB.accept]:c?"Pending":"Not Offered",[JOB.notes]:fd.j_n.trim()};
+     if(fd.j_price!=="")fields[JOB.price]=+fd.j_price;
+     if(fd.j_pay!=="")fields[JOB.pay]=+fd.j_pay;
+     if(c){fields[JOB.cleaner]=c.name;if(c.email)fields[JOB.cEmail]=c.email;if(c.phone)fields[JOB.cPhone]=c.phone;fields[JOB.offered]=new Date().toISOString()}
+     const res=await at("create_records_for_table",JOB.base,JOB.table,[{fields}],{fieldIds:[JOB.ref]});
+     const rec=(res&&res.records&&res.records[0])||{},ref=(rec.cellValuesByFieldId||rec.fields||{})[JOB.ref]||"";
+     if(b&&recOf(b)){try{await at("update_records_for_table",BOOK.base,BOOK.table,[{id:recOf(b),fields:{[BOOK.status]:"Accepted"}}])}catch(e){}}
+     const area=(fd.j_p.match(/\b[A-Z]{1,2}\d{1,2}[A-Z]?\b/i)||[])[0]||"";
+     const deadline=`${String(dl.getHours()).padStart(2,"0")}:${String(dl.getMinutes()).padStart(2,"0")} today`;
+     const offer=offerText({ref,date:fd.j_d,time:fd.j_t,area:area?area.toUpperCase()+", Birmingham":"",service:fd.j_s,pay:fd.j_pay,deadline});
+     S.jobs=S.jobs||[];S.jobs.unshift({id:rec.id,url:rec.id?atUrl(JOB.base,JOB.table,rec.id):"",ref,date:fd.j_d,customer:fd.j_c.trim(),property:fd.j_p.trim(),cleaner:c?c.name:"",status:c?"Assigned":"Unassigned",price:+fd.j_price||0,cleanerPay:+fd.j_pay||0,payStatus:"Not Due",offer});
+     if(b){S.bookings=(S.bookings||[]).filter(x=>x!==b)}
+     saveSnap();render();toast("Job card saved in Airtable");
+     if(c)showOffer(offer);else dlg.close();
+   });
+}
+function copy(txt,msg){navigator.clipboard.writeText(txt).then(()=>toast(msg||"Copied")).catch(()=>{toast("Copy didn't work here. Press and hold the text to copy it.")})}
+
+/* ---------- clicks ---------- */
+content.addEventListener("click",e=>{
+  const b=e.target.closest("[data-act]");if(!b)return;const a=b.dataset.act,i=+b.dataset.i;
+  if(a==="p")return prospectAction(b.dataset.id,b.dataset.k);
+  if(a==="copy")return copy(b.dataset.v);
+  if(a==="doc"&&M&&metaRef){const d=M.docs[i];d.done=!d.done;render();return saveMeta(d.done?"Marked built":"Reopened")}
+  if(a==="done"){const n=S.needs[i];if(!n)return;S.dismissed=(S.dismissed||[]).concat(n.text).slice(-40);S.needs.splice(i,1);render();saveSnap();return toast("Cleared")}
+  if(a==="delslot"){M.freeTimes=(M.freeTimes||[]).filter(s=>s.at!==b.dataset.at);render();return saveMeta("Slot removed")}
+  /* bookings */
+  const bk=(S.bookings||[])[i];
+  if(a==="bq"&&bk)return run("b"+i,"Quote marked sent",async()=>{await at("update_records_for_table",BOOK.base,BOOK.table,[{id:recOf(bk),fields:{[BOOK.status]:"Quoted",[BOOK.quoteSent]:true}}]);bk.status="Quoted";S.needs=(S.needs||[]).filter(n=>!(new RegExp("^Send quote: "+bk.name.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"),"i")).test(n.text))});
+  if(a==="bpaid"&&bk)return run("b"+i,"Marked paid. Create the job next",async()=>{await at("update_records_for_table",BOOK.base,BOOK.table,[{id:recOf(bk),fields:{[BOOK.pay]:"Paid",[BOOK.status]:"Accepted",[BOOK.accepted]:true}}]);bk.payment="Paid";bk.status="Accepted"});
+  if(a==="blost"&&bk)return run("b"+i,"Marked lost",async()=>{await at("update_records_for_table",BOOK.base,BOOK.table,[{id:recOf(bk),fields:{[BOOK.status]:"Lost"}}]);S.bookings.splice(i,1)});
+  if(a==="newjob"){if(!mcp)return toast("Creating jobs needs this page opened in Claude with Airtable allowed.");return newJob(b.dataset.i!==undefined?bk:null)}
+  /* jobs */
+  const jb=(S.jobs||[])[i];
+  if(a==="joffer"&&jb)return showOffer(jb.offer);
+  if(a==="jaccept"&&jb)return run("j"+i,"Cleaner confirmed",async()=>{await at("update_records_for_table",JOB.base,JOB.table,[{id:recOf(jb),fields:{[JOB.accept]:"Accepted",[JOB.status]:"Confirmed",[JOB.dispatch]:"Offer Sent"}}]);jb.status="Confirmed"});
+  if(a==="jdone"&&jb)return run("j"+i,"Job completed. Check the photos next",async()=>{await at("update_records_for_table",JOB.base,JOB.table,[{id:recOf(jb),fields:{[JOB.status]:"Completed",[JOB.payStatus]:"Awaiting QC"}}]);jb.status="Completed";jb.payStatus="Awaiting QC"});
+  if(a==="jqc"&&jb)return run("j"+i,"QC passed and pay approved",async()=>{await at("update_records_for_table",JOB.base,JOB.table,[{id:recOf(jb),fields:{[JOB.qc]:"Passed",[JOB.auth]:"Authorised",[JOB.payStatus]:"Approved"}}]);jb.payStatus="Approved";jb.readyToPay=true});
+  if(a==="jpaid"&&jb){const d=new Date(),first=String(jb.cleaner||"").split(" ")[0];const ref=`AVS ${d.getDate()} ${MON[d.getMonth()]} ${first}`.trim();
+    return run("j"+i,`Marked paid · ref "${ref}"`,async()=>{await at("update_records_for_table",JOB.base,JOB.table,[{id:recOf(jb),fields:{[JOB.payStatus]:"Paid",[JOB.paidDate]:today(),[JOB.payRef]:ref}}]);jb.payStatus="Paid";jb.readyToPay=false})}
+  /* cleaner checks */
+  const cl=(S.cleaners&&S.cleaners.pending||[])[i];
+  if(a==="ccheck"&&cl){const c=CHECKS.find(x=>x[0]===b.dataset.k);
+    return run("c"+i,`${c[1]} ticked`,async()=>{const f={[c[2]]:true};await at("update_records_for_table",CLN.base,CLN.table,[{id:recOf(cl),fields:f}]);cl.checks=cl.checks||{};CHECKS.forEach(x=>{if(cl.checks[x[0]]===undefined)cl.checks[x[0]]=!x[3].test(String(cl.missing||""))});cl.checks[c[0]]=true;cl.missing=String(cl.missing||"").split(/,\s*/).filter(m=>!c[3].test(m)||/expiry|expired/.test(m)).join(", ")})}
+  if(a==="cexp"&&cl){openSheet(`<h3>Insurance expiry for ${esc(cl.name)}</h3>${field("x_d","Expiry date on their certificate",addD(365),"date","required")}<p class="note">Also ticks Insurance as verified.</p>`,"Save",async fd=>{busy["c"+i]="Saving…";render();try{await at("update_records_for_table",CLN.base,CLN.table,[{id:recOf(cl),fields:{[CLN.expiry]:fd.x_d,[CHECKS[2][2]]:true}}]);cl.missing=String(cl.missing||"").split(/,\s*/).filter(m=>!/expiry|expired|^insurance$/i.test(m)).join(", ");saveSnap();toast("Insurance saved")}finally{delete busy["c"+i];render();dlg.close()}});return}
+});
+content.addEventListener("submit",e=>{
+  if(e.target.id!=="slotform")return;e.preventDefault();
+  const d=$("#sl_d").value,tm=$("#sl_t").value;if(!d||!tm)return;
+  M=M||{docs:[],taxRate:0.25};M.freeTimes=(M.freeTimes||[]).filter(s=>s.at>=new Date().toISOString().slice(0,10));
+  const at=d+"T"+tm;if(!M.freeTimes.some(s=>s.at===at))M.freeTimes.push({at,mins:15});
+  render();saveMeta("Slot added: "+fmtSlot(at));
+});
+
+(async()=>{
+  try{db=await(window.claude&&window.claude.use?window.claude.use("db"):null)}catch(e){}
+  try{mcp=await window.claude.use("mcp")}catch(e){mcp=null}
+  if(!db){$("#loading").textContent="Open this page signed in to Claude to see AVS OS.";return}
+  snapRef=db.doc(SNAP);metaRef=db.doc(META);
+  metaRef.onSnapshot(s=>{if(s.metadata.hasPendingWrites||hold)return;M=s.exists?JSON.parse(JSON.stringify(s.data())):{docs:[],taxRate:0.25};if(S&&!dlg.open)render()},()=>{});
+  snapRef.onSnapshot(s=>{if(s.metadata.hasPendingWrites||hold||Object.keys(busy).length)return;S=s.exists?JSON.parse(JSON.stringify(s.data())):null;if(!dlg.open)render()},
+   ()=>{$("#loading").hidden=false;$("#loading").textContent="Couldn't load. Reload the page to try again.";content.hidden=true});
+  try{db.collection(LEADS).limit(1000).onSnapshot(q=>{L=q.docs.map(d=>Object.assign({id:d.id},d.data()||{}));if(!Object.keys(busy).length&&!dlg.open)render()},()=>{})}catch(e){}
+  try{db.doc(SCRIPTS).onSnapshot(s=>{SC=s.exists?JSON.parse(JSON.stringify(s.data())):null;if(!Object.keys(busy).length&&!dlg.open)render()},()=>{})}catch(e){}
+})();
+})();
+</script>

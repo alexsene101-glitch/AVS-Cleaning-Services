@@ -27,3 +27,19 @@ form must be updated too.
 objection handlers and the price card, then log the outcome (no answer, voicemail, interested, trial booked,
 not now). Follow-up dates set themselves. "Interested" offers a ready-to-paste rates email. It uses the page's
 own storage, so it costs no Airtable calls.
+
+## One-tap admin (AVS OS)
+[`tools/avs-os.html`](tools/avs-os.html) is the AVS OS page (https://claude.ai/artifact/M61V3BACQanML2ttEevhr9).
+Its buttons write to Airtable directly through your Airtable connector:
+- **Bookings:** Quote sent, Paid, Lost, and Create job. Create job makes the Job Card and gives you a
+  WhatsApp offer to copy to the cleaner.
+- **Jobs:** Cleaner accepted, Completed, Photos OK (approve pay), Cleaner paid (with a bank reference).
+- **Cleaners:** tick the vetting checks and set the insurance expiry date.
+- **Needs you:** Done clears an item, and the hourly sync won't add it back.
+- **Call times:** add slots and the sync offers them to vetted applicants by email.
+
+Each tap uses one Airtable call. [`autopilot/avs-os-sync-prompt.md`](autopilot/avs-os-sync-prompt.md) is a
+copy of the live hourly sync instructions.
+
+The Sunday money check-in now pulls Wise through Era by itself and only asks for statements from the banks
+that aren't connected.
